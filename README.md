@@ -1,4 +1,4 @@
-# rschess
+# protochess
 
 
 [![pipeline status](https://gitlab.com/klercke/protochess/badges/main/pipeline.svg)](https://gitlab.com/klercke/protochess/-/commits/main) 
