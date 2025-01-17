@@ -24,6 +24,12 @@ pub struct Chessboard {
     pub black_kings: Bitboard,
 }
 
+impl Default for Chessboard {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Chessboard {
     /// Creates a new chessboard with all pieces in their starting positions
     pub fn new() -> Self {
