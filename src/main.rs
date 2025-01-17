@@ -1,3 +1,5 @@
+use std::io::{self, Write};
+
 /// Represents a bitboard
 pub type Bitboard = u64;
 
@@ -191,6 +193,51 @@ impl Chessboard {
 pub fn main() {
     let board = Chessboard::new();
     board.display();
+
+    loop {
+        print!("Enter a command: ");
+        io::stdout().flush().unwrap();
+
+        let mut input = String::new();
+        io::stdin().read_line(&mut input).unwrap();
+        let command = input.trim();
+
+        match command {
+            "help" => {
+                println!("Available commands:");
+                println!("  help    - Show this menu");
+                println!("  quit    - Exits protochess");
+                println!("  convert - Converts between internal square ID and algebraic notation");
+            }
+            "quit" => {
+                println!("Bye!");
+                break;
+            }
+            "convert" => {
+                print!("Enter square ID or algebraic square name: ");
+                io::stdout().flush().unwrap();
+
+                let mut convert_input = String::new();
+                io::stdin().read_line(&mut convert_input).unwrap();
+                let convert_input = convert_input.trim();
+
+                if let Ok(square) = convert_input.parse::<usize>() {
+                    if let Some(notation) = Chessboard::notation_from_square(square) {
+                        println!("Square #{} is {}", square, notation);
+                    } else {
+                        println!("Invalid square ID");
+                    }
+                } else if let Some(square) = Chessboard::square_from_notation(convert_input) {
+                    println!("Square {} is #{}", convert_input, square);
+                } else {
+                    println!("Invalid input");
+                }
+            }
+            _ => {
+                println!("Unknown/invalid command. Type 'help' for a list of commands");
+            }
+        }
+    }
 }
 
 #[cfg(test)]
