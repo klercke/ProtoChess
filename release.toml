@@ -1,4 +1,2 @@
-pre-release-hook = ["git", "cliff", "-o", "CHANGELOG.md", "--tag", "{{version}}" ]
-
 # Maybe I'll post this on crates.io if/when it's in a usable state
 publish = false
