@@ -13,6 +13,7 @@ stages:
 
 coverage:
   stage: coverage
+  image: rust:latest
   script:
     - cargo install cargo-tarpaulin
     - cargo tarpaulin --out Xml
