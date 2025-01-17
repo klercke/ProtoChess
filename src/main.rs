@@ -1,7 +1,7 @@
 /// Represents a bitboard
 pub type Bitboard = u64;
 
-/// Constants for the bitboard's size and bitmasks
+///// Constants for the bitboard's size and bitmasks
 //const BOARD_SIZE: usize = 64;
 //const FILE_A: Bitboard = 0x0101_0101_0101_0101;
 //const FILE_H: Bitboard = 0x8080_8080_8080_8080;
@@ -185,31 +185,37 @@ impl Chessboard {
 pub fn main() {
     let board = Chessboard::new();
     board.display();
+}
 
-    // Example usage of square_from_notation
-    if let Some(square) = Chessboard::square_from_notation("e4") {
-        println!("Square e4 corresponds to index {}", square);
-    } else {
-        println!("Invalid notation");
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_square_from_notation() {
+        assert_eq!(Chessboard::square_from_notation("a1"), Some(0));
+        assert_eq!(Chessboard::square_from_notation("h8"), Some(63));
+        assert_eq!(Chessboard::square_from_notation("e4"), Some(28));
+        assert_eq!(Chessboard::square_from_notation("d5"), Some(35));
+        assert_eq!(Chessboard::square_from_notation("invalid"), None);
+        assert_eq!(Chessboard::square_from_notation("a9"), None);
     }
 
-    // Example usage of notation_from_square
-    if let Some(notation) = Chessboard::notation_from_square(28) {
-        println!("Square index 28 corresponds to notation {}", notation);
-    } else {
-        println!("Invalid square index");
+    #[test]
+    fn test_notation_from_square() {
+        assert_eq!(Chessboard::notation_from_square(0), Some("a1".to_string()));
+        assert_eq!(Chessboard::notation_from_square(63), Some("h8".to_string()));
+        assert_eq!(Chessboard::notation_from_square(28), Some("e4".to_string()));
+        assert_eq!(Chessboard::notation_from_square(35), Some("d5".to_string()));
+        assert_eq!(Chessboard::notation_from_square(64), None);
     }
 
-    // Find the square number of the white queen
-    let queen_square = board.white_queens.trailing_zeros() as usize;
-
-    // Convert the square number to standard notation
-    if let Some(notation) = Chessboard::notation_from_square(queen_square) {
-        println!(
-            "The white queen is located at {} (square {})",
-            notation, queen_square
-        );
-    } else {
-        println!("The white queen's location could not be determined.");
+    #[test]
+    fn test_round_trip_conversion() {
+        for square in 0..64 {
+            let notation = Chessboard::notation_from_square(square).unwrap();
+            let back_to_square = Chessboard::square_from_notation(&notation).unwrap();
+            assert_eq!(square, back_to_square);
+        }
     }
 }
