@@ -1,0 +1,19 @@
+stages:
+  - build
+
+variables:
+  CARGO_HOME: "$CI_PROJECT_DIR/.cargo"
+  BUILD_TARGETS: "x86_64-unknown-linux-gnu x86_64-pc-windows-gnu"
+
+build:
+  stage: build
+  image: rust:latest
+  before_script:
+    - for target in $BUILD_TARGETS; do rustup target add $target; done
+  script:
+    - for target in $BUILD_TARGETS; do cargo build --release --target $target; done
+  artifacts:
+    paths:
+      - target/**/release/
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
