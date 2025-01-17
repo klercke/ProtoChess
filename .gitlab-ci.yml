@@ -17,10 +17,11 @@ coverage:
   script:
     - cargo install cargo-tarpaulin
     - cargo tarpaulin --out Xml
+  coverage: '/^\d+.\d+% coverage/'
   artifacts:
     paths:
-      - tarpaulin-report.xml
+      - cobertura.xml
     reports:
       coverage_report:
         coverage_format: cobertura
-        path: tarpaulin-report.xml
+        path: cobertura.xml
