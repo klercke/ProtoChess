@@ -1,4 +1,3 @@
-
 /// Represents a bitboard
 pub type Bitboard = u64;
 
@@ -29,25 +28,25 @@ impl Chessboard {
     /// Creates a new chessboard with all pieces in their starting positions
     pub fn new() -> Self {
         Self {
-            white_pawns:   0x0000_0000_0000_FF00, // ... 1111 1111 ...
-            white_rooks:   0x0000_0000_0000_0081, // ... 1000 0001
+            white_pawns: 0x0000_0000_0000_FF00,   // ... 1111 1111 ...
+            white_rooks: 0x0000_0000_0000_0081,   // ... 1000 0001
             white_knights: 0x0000_0000_0000_0042, // ... 0100 0010
             white_bishops: 0x0000_0000_0000_0024, // ... 0010 0100
-            white_queens:  0x0000_0000_0000_0008, // ... 0000 1000
-            white_kings:   0x0000_0000_0000_0010, // ... 0001 0000
-            
-            black_pawns:   0x00FF_0000_0000_0000, // ... 1111 1111 ... 
-            black_rooks:   0x8100_0000_0000_0000, // 1000 0001 ...
+            white_queens: 0x0000_0000_0000_0008,  // ... 0000 1000
+            white_kings: 0x0000_0000_0000_0010,   // ... 0001 0000
+
+            black_pawns: 0x00FF_0000_0000_0000, // ... 1111 1111 ...
+            black_rooks: 0x8100_0000_0000_0000, // 1000 0001 ...
             black_knights: 0x4200_0000_0000_0000, // 0100 0010 ...
             black_bishops: 0x2400_0000_0000_0000, // 0010 0100 ...
-            black_queens:  0x0800_0000_0000_0000, // 0000 1000 ...
-            black_kings:   0x1000_0000_0000_0000, // 0001 0000 ...
+            black_queens: 0x0800_0000_0000_0000, // 0000 1000 ...
+            black_kings: 0x1000_0000_0000_0000, // 0001 0000 ...
         }
     }
-    
+
     /// Checks if a given square is occupied
     pub fn is_square_occupied(&self, square: usize) -> bool {
-        let mask = 1 << square; 
+        let mask = 1 << square;
         (self.occupied() & mask) != 0
     }
 
@@ -55,10 +54,10 @@ impl Chessboard {
     pub fn occupied(&self) -> Bitboard {
         self.white_pieces() | self.black_pieces()
     }
-    
+
     /// Returns a bitboard of all white pieces
     pub fn white_pieces(&self) -> Bitboard {
-        self.white_pawns 
+        self.white_pawns
             | self.white_rooks
             | self.white_knights
             | self.white_bishops
@@ -68,7 +67,7 @@ impl Chessboard {
 
     /// Returns a bitboard of all black pieces
     pub fn black_pieces(&self) -> Bitboard {
-        self.black_pawns 
+        self.black_pawns
             | self.black_rooks
             | self.black_knights
             | self.black_bishops
@@ -76,11 +75,11 @@ impl Chessboard {
             | self.black_kings
     }
 
-    /// Moves the piece at a given square to another 
+    /// Moves the piece at a given square to another
     pub fn move_piece(&mut self, from: usize, to: usize) {
         let mask_from = 1 << from;
         let mask_to = 1 << to;
-        
+
         // Search through each bitboard to find the one with our target piece
         for piece in [
             &mut self.white_pawns,
@@ -96,7 +95,7 @@ impl Chessboard {
             &mut self.black_queens,
             &mut self.black_kings,
         ] {
-            if *piece & mask_from != 0 { 
+            if *piece & mask_from != 0 {
                 *piece &= !mask_from; // Remove the piece from its original position
                 *piece |= mask_to; // Put the piece down in its destination
                 break;
@@ -156,7 +155,9 @@ impl Chessboard {
         let file = notation.chars().nth(0)?;
         let rank = notation.chars().nth(1)?;
 
-        if !("a"..="h").contains(&file.to_string().as_str()) || !("1"..="8").contains(&rank.to_string().as_str()) {
+        if !("a"..="h").contains(&file.to_string().as_str())
+            || !("1"..="8").contains(&rank.to_string().as_str())
+        {
             // TODO: Throw an error
             return None;
         }
@@ -204,7 +205,10 @@ pub fn main() {
 
     // Convert the square number to standard notation
     if let Some(notation) = Chessboard::notation_from_square(queen_square) {
-        println!("The white queen is located at {} (square {})", notation, queen_square);
+        println!(
+            "The white queen is located at {} (square {})",
+            notation, queen_square
+        );
     } else {
         println!("The white queen's location could not be determined.");
     }
