@@ -1,14 +1,13 @@
-use std::fmt;
 
 /// Represents a bitboard
 pub type Bitboard = u64;
 
 /// Constants for the bitboard's size and bitmasks
-const BOARD_SIZE: usize = 64;
-const FILE_A: Bitboard = 0x0101_0101_0101_0101;
-const FILE_H: Bitboard = 0x8080_8080_8080_8080;
-const RANK_1: Bitboard = 0x0000_0000_0000_00FF;
-const RANK_8: Bitboard = 0xFF00_0000_0000_0000;
+//const BOARD_SIZE: usize = 64;
+//const FILE_A: Bitboard = 0x0101_0101_0101_0101;
+//const FILE_H: Bitboard = 0x8080_8080_8080_8080;
+//const RANK_1: Bitboard = 0x0000_0000_0000_00FF;
+//const RANK_8: Bitboard = 0xFF00_0000_0000_0000;
 
 /// Chessboard made of bitboards representing each piece
 pub struct Chessboard {
@@ -183,7 +182,7 @@ impl Chessboard {
 }
 
 pub fn main() {
-    let mut board = Chessboard::new();
+    let board = Chessboard::new();
     board.display();
 
     // Example usage of square_from_notation
