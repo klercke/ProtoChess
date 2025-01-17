@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.2] - 2025-01-17
+
+### 🎨 Styling
+
+- Run cargo fmt
+
 ## [0.1.1] - 2025-01-17
 
 ### 📚 Documentation
@@ -11,6 +17,7 @@ All notable changes to this project will be documented in this file.
 ### ⚙️ Miscellaneous Tasks
 
 - Add .gitlab-ci.yml
+- Release protochess version 0.1.1
 
 ## [0.1.0] - 2025-01-17
 
