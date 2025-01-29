@@ -1,2 +1,5 @@
 # Maybe I'll post this on crates.io if/when it's in a usable state
 publish = false
+
+pre-release-hook = ["git cliff -o CHANGELOG.md && git add CHANGELOG.md && git commit -m 'chore: update changelog'"]
+
