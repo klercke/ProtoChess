@@ -2,5 +2,5 @@
 publish = false
 
 # Update changelog
-pre-release-hook = ["sh", "-c", "git cliff --tag {{version}} -o CHANGELOG.md && git add CHANGELOG.md"]
+pre-release-hook = ["sh", "-c", "git cliff --tag {{version}} -o CHANGELOG.md"]
 

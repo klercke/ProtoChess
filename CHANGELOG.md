@@ -25,6 +25,7 @@ All notable changes to this project will be documented in this file.
 - *(cargo-release)* Change git-cliff to git cliff
 - *(cargo-build)* Use tag argument for git-cliff
 - *(cargo-release)* Remove git-cliff release
+- *(cargo-release)* Git add changelog after updating
 
 ## [0.2.0] - 2025-01-17
 
