@@ -22,6 +22,7 @@ All notable changes to this project will be documented in this file.
 - *(cargo-release)* Add git-cliff hook
 - *(cargo-release)* Update git-cliff hook
 - *(git-cliff)* Exclude changelog updates
+- *(cargo-release)* Change git-cliff to git cliff
 
 ## [0.2.0] - 2025-01-17
 
