@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [unreleased]
+## [0.2.0] - 2025-01-29
 
 ### 📚 Documentation
 
@@ -19,6 +19,8 @@ All notable changes to this project will be documented in this file.
 - *(coverage)* Fix codecov command
 - *(release)* Add automatic release creation on tag push
 - *(release)* Fix syntax error
+- Update changelog
+- *(cargo-release)* Add git-cliff hook
 
 ## [0.2.0] - 2025-01-17
 
