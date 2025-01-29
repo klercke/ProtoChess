@@ -2,7 +2,7 @@
 
 
 [![pipeline status](https://gitlab.com/klercke/protochess/badges/main/pipeline.svg)](https://gitlab.com/klercke/protochess/-/commits/main) 
-[![coverage report](https://gitlab.com/klercke/protochess/badges/main/coverage.svg)](https://gitlab.com/klercke/protochess/-/commits/main) 
+[![coverage report](https://gitlab.com/klercke/protochess/badges/main/coverage.svg)](https://app.codecov.io/gl/klercke/protochess) 
 [![Latest Release](https://gitlab.com/klercke/protochess/-/badges/release.svg)](https://gitlab.com/klercke/protochess/-/releases)
 
 Chess game/engine written in Rust
