@@ -26,6 +26,7 @@ All notable changes to this project will be documented in this file.
 - *(cargo-build)* Use tag argument for git-cliff
 - *(cargo-release)* Remove git-cliff release
 - *(cargo-release)* Git add changelog after updating
+- *(cargo release)* Undo previous commit
 
 ## [0.2.0] - 2025-01-17
 
