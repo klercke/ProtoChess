@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.2.0] - 2025-01-29
+## [unreleased]
 
 ### 📚 Documentation
 
@@ -21,6 +21,7 @@ All notable changes to this project will be documented in this file.
 - *(release)* Fix syntax error
 - Update changelog
 - *(cargo-release)* Add git-cliff hook
+- Update changelog
 
 ## [0.2.0] - 2025-01-17
 
