@@ -2,5 +2,5 @@
 publish = false
 
 # Update changelog
-pre-release-hook = ["sh", "-c", "git-cliff --bump -o CHANGELOG.md && git add CHANGELOG.md && git commit -m 'chore: update changelog'"]
+pre-release-hook = ["sh", "-c", "git cliff --bump -o CHANGELOG.md && git add CHANGELOG.md && git commit -m 'chore: update changelog'"]
 
