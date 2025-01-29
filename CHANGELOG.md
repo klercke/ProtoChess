@@ -19,10 +19,9 @@ All notable changes to this project will be documented in this file.
 - *(coverage)* Fix codecov command
 - *(release)* Add automatic release creation on tag push
 - *(release)* Fix syntax error
-- Update changelog
 - *(cargo-release)* Add git-cliff hook
-- Update changelog
-- Update changelog
+- *(cargo-release)* Update git-cliff hook
+- *(git-cliff)* Exclude changelog updates
 
 ## [0.2.0] - 2025-01-17
 
