@@ -220,7 +220,10 @@ fn convert_command(input: &String) {
     } else if let Some(square) = Chessboard::square_from_notation(input) {
         println!("{}", square);
     } else {
-        println!("Could not interpret {} as algebraic notation or square ID", input);
+        println!(
+            "Could not interpret {} as algebraic notation or square ID",
+            input
+        );
     }
 }
 
@@ -256,7 +259,7 @@ fn handle_command(command: Commands) {
     match command {
         Commands::Convert { notation } => {
             convert_command(&notation);
-        },
+        }
         Commands::Exit => {
             println!("Bye!");
             std::process::exit(0);
