@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.3] - 2025-01-30
+
+### ⚙️ Miscellaneous Tasks
+
+- *(coverage)* Make job run only on commits to main
+
 ## [0.2.2] - 2025-01-30
 
 ### ⚙️ Miscellaneous Tasks
@@ -9,6 +15,7 @@ All notable changes to this project will be documented in this file.
 - *(coverage)* Cache cargo-tarpaulin
 - *(coverage)* Remove cache
 - *(coverage)* Update codecov command
+- Release protochess version 0.2.2
 
 ## [0.2.1] - 2025-01-29
 
