@@ -15,6 +15,12 @@ stages:
 coverage:
   stage: coverage
   image: rust:latest
+  cache:
+    key: cargo-tarpaulin
+    paths:
+      - ~/.cargo/bin/
+      - ~/.cargo/registry/
+      - ~/.cargo/git/
   script:
     - cargo install cargo-tarpaulin
     - cargo tarpaulin --out Xml
