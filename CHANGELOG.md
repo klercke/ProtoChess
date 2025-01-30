@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.3.1] - 2025-01-30
+
+### ⚙️ Miscellaneous Tasks
+
+- *(cargo-release)* Fix changelog-latest generation
+
 ## [0.3.0] - 2025-01-30
 
 ### 🚀 Features
