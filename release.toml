@@ -2,5 +2,5 @@
 publish = false
 
 # Update changelog
-pre-release-hook = ["sh", "-c", "git cliff --tag {{version}} -o CHANGELOG.md && git cliff --tag {{version}} --latest -o CHANGELOG-LATEST.md"]
+pre-release-hook = ["sh", "-c", "git cliff --tag {{version}} -o CHANGELOG.md && git cliff --tag {{version}} --unreleased -o CHANGELOG-LATEST.md"]
 
