@@ -1,5 +1,24 @@
 use std::io::{self, Write};
 
+use clap::{Parser, Subcommand};
+
+/// Define command-line args
+#[derive(Parser)]
+#[command(version, about, long_about = None)]
+struct Cli {
+    #[command(subcommand)]
+    command: Option<Commands>,
+}
+
+/// Define commands
+#[derive(Subcommand)]
+enum Commands {
+    /// Converts to/from square ID and standard algebraic notation
+    Convert { notation: String },
+    /// Exits the program
+    Exit,
+}
+
 /// Represents a bitboard
 pub type Bitboard = u64;
 
@@ -154,7 +173,7 @@ impl Chessboard {
         }
     }
 
-    /// Convert standard notation (e4) to square number (28)
+    /// Converts standard notation (e4) to square number (28)
     pub fn square_from_notation(notation: &str) -> Option<usize> {
         if notation.len() != 2 {
             // TODO: Throw an error
@@ -176,7 +195,7 @@ impl Chessboard {
         Some(rank_index * 8 + file_index)
     }
 
-    /// Convert square number (28) to standard notation (e4)
+    /// Converts square number (28) to standard notation (e4)
     pub fn notation_from_square(square: usize) -> Option<String> {
         if square >= 64 {
             // TODO: Throw an error
@@ -190,53 +209,69 @@ impl Chessboard {
     }
 }
 
-pub fn main() {
+/// Calls the relevant function to convert between square ID and algebraic notation
+fn convert_command(input: &String) {
+    if let Ok(square) = input.parse::<usize>() {
+        if let Some(notation) = Chessboard::notation_from_square(square) {
+            println!("{}", notation);
+        } else {
+            println!("Invalid square ID: {}", square);
+        }
+    } else if let Some(square) = Chessboard::square_from_notation(input) {
+        println!("{}", square);
+    } else {
+        println!("Could not interpret {} as algebraic notation or square ID", input);
+    }
+}
+
+/// Prompts the user to run commands interactively
+fn interactive_mode() {
+    // Generate and print board
     let board = Chessboard::new();
     board.display();
 
     loop {
-        print!("Enter a command: ");
+        // Get command from user
+        print!("PC> ");
         io::stdout().flush().unwrap();
-
         let mut input = String::new();
         io::stdin().read_line(&mut input).unwrap();
-        let command = input.trim();
+        let input = input.trim().to_string();
 
-        match command {
-            "help" => {
-                println!("Available commands:");
-                println!("  help    - Show this menu");
-                println!("  quit    - Exits protochess");
-                println!("  convert - Converts between internal square ID and algebraic notation");
-            }
-            "quit" => {
-                println!("Bye!");
-                break;
-            }
-            "convert" => {
-                print!("Enter square ID or algebraic square name: ");
-                io::stdout().flush().unwrap();
-
-                let mut convert_input = String::new();
-                io::stdin().read_line(&mut convert_input).unwrap();
-                let convert_input = convert_input.trim();
-
-                if let Ok(square) = convert_input.parse::<usize>() {
-                    if let Some(notation) = Chessboard::notation_from_square(square) {
-                        println!("Square #{} is {}", square, notation);
-                    } else {
-                        println!("Invalid square ID");
-                    }
-                } else if let Some(square) = Chessboard::square_from_notation(convert_input) {
-                    println!("Square {} is #{}", convert_input, square);
-                } else {
-                    println!("Invalid input");
+        // Process command
+        let args: Vec<String> = input.split_whitespace().map(String::from).collect();
+        match Cli::try_parse_from(std::iter::once("").chain(args.iter().map(String::as_str))) {
+            Ok(cli) => {
+                if let Some(command) = cli.command {
+                    handle_command(command);
                 }
             }
-            _ => {
-                println!("Unknown/invalid command. Type 'help' for a list of commands");
-            }
+            Err(e) => println!("{}", e),
         }
+    }
+}
+
+/// Processes commands and arguments
+fn handle_command(command: Commands) {
+    match command {
+        Commands::Convert { notation } => {
+            convert_command(&notation);
+        },
+        Commands::Exit => {
+            println!("Bye!");
+            std::process::exit(0);
+        }
+    }
+}
+
+pub fn main() {
+    // Process command line args
+    let cli = Cli::parse();
+    if let Some(command) = cli.command {
+        handle_command(command);
+    } else {
+        // Go into interactive mode if no command is supplied
+        interactive_mode();
     }
 }
 
