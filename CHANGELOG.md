@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.2] - 2025-01-30
+
+### ⚙️ Miscellaneous Tasks
+
+- *(coverage)* Cache cargo-tarpaulin
+- *(coverage)* Remove cache
+- *(coverage)* Update codecov command
+
 ## [0.2.1] - 2025-01-29
 
 ### 📚 Documentation
@@ -27,6 +35,7 @@ All notable changes to this project will be documented in this file.
 - *(cargo-release)* Remove git-cliff release
 - *(cargo-release)* Git add changelog after updating
 - *(cargo release)* Undo previous commit
+- Release protochess version 0.2.1
 
 ## [0.2.0] - 2025-01-17
 
