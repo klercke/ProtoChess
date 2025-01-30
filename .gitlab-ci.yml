@@ -49,3 +49,8 @@ release_job:
   release:
     tag_name: '$CI_COMMIT_TAG'
     description: './CHANGELOG-LATEST.md'
+    assets:
+      links:
+        - name: "protochess"
+          url: "${CI_PROJECT_URL}/-/jobs/artifacts/${CI_COMMIT_REF_NAME}/raw/.production-build/bin/protochess?job=production"
+          filepath: "/protochess"
