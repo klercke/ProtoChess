@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.3.0] - 2025-01-30
+
+### 🚀 Features
+
+- *(cli)* Add command-line arguements
+
+### 🎨 Styling
+
+- *(main.rs)* Run cargo fmt
+
 ## [0.2.5] - 2025-01-30
 
 ### ⚙️ Miscellaneous Tasks
