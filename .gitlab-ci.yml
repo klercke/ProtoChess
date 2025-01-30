@@ -48,4 +48,4 @@ release_job:
     - release build
   release:
     tag_name: '$CI_COMMIT_TAG'
-    description: '$CI_COMMIT_TAG'
+    description: './CHANGELOG-LATEST.md'
