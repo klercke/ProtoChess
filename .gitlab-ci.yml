@@ -25,7 +25,7 @@ coverage:
     - gpg --verify codecov.SHA256SUM.sig codecov.SHA256SUM
     - shasum -a 256 -c codecov.SHA256SUM
     - chmod +x codecov
-    - ./codecov upload-process -t $CODECOV_TOKEN -f cobertura.xml
+    - ./codecov --verbose upload-process --disable-search --token $CODECOV_TOKEN --file cobertura.xml
   coverage: '/^\d+.\d+% coverage/'
   artifacts:
     paths:
