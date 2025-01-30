@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.3.2] - 2025-01-30
+
+### ⚙️ Miscellaneous Tasks
+
+- *(release_job)* Link build binary in release
+
 ## [0.3.1] - 2025-01-30
 
 ### ⚙️ Miscellaneous Tasks
