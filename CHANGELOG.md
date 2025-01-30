@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.2.5] - 2025-01-30
+
+### ⚙️ Miscellaneous Tasks
+
+- *(release)* Add changelog to release descriptions
+
 ## [0.2.4] - 2025-01-30
 
 ### ⚙️ Miscellaneous Tasks
