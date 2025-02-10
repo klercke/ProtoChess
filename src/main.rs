@@ -1,6 +1,6 @@
 use std::io::{self, Write};
-use std::time::Instant;
 use std::sync::OnceLock;
+use std::time::Instant;
 
 use clap::{Parser, Subcommand};
 
@@ -48,7 +48,10 @@ fn parse_lookup_table_piece(s: &str) -> Result<LookupTablePiece, String> {
         "KNIGHT" | "N" => Ok(LookupTablePiece::Knight),
         "KING" | "K" => Ok(LookupTablePiece::King),
         "PAWN" | "P" => Ok(LookupTablePiece::Pawn),
-        _ => Err(format!("Invalid piece: {}. Must be KNIGHT, KING, or PAWN (or N, K, or P).", s)),
+        _ => Err(format!(
+            "Invalid piece: {}. Must be KNIGHT, KING, or PAWN (or N, K, or P).",
+            s
+        )),
     }
 }
 
@@ -199,7 +202,8 @@ impl Chessboard {
 
     /// Pretty(-ish) print the board
     pub fn display(&self) {
-        for rank in (0..8).rev() { // Start from rank 8
+        // Start from rank 8
+        for rank in (0..8).rev() {
             print!("{} ", rank + 1); // Rank labels (1-indexed)
             for file in 0..8 {
                 let square = rank * 8 + file;
@@ -326,7 +330,8 @@ fn precompute_knight_moves() -> [Bitboard; 64] {
 
 /// Pretty print Bitboard for debugging
 fn pretty_print_bitboard(bitboard: Bitboard, marker: Option<usize>) {
-    for rank in (0..8).rev() { // Start from rank 8
+    // Start from rank 8
+    for rank in (0..8).rev() {
         print!("{} ", rank + 1); // Rank labels (1-indexed)
         for file in 0..8 {
             let square = rank * 8 + file;
@@ -383,9 +388,15 @@ fn handle_command(command: Commands) {
         }
         Commands::GetValidMoves { square, piece } => {
             let move_table = match piece {
-                LookupTablePiece::Knight => KNIGHT_MOVE_TABLE.get().expect("Knight table not initialized."),
-                LookupTablePiece::King => KING_MOVE_TABLE.get().expect("King table not initialized."),
-                LookupTablePiece::Pawn => PAWN_ATTACK_TABLE.get().expect("Pawn table not initialized."),
+                LookupTablePiece::Knight => KNIGHT_MOVE_TABLE
+                    .get()
+                    .expect("Knight table not initialized."),
+                LookupTablePiece::King => {
+                    KING_MOVE_TABLE.get().expect("King table not initialized.")
+                }
+                LookupTablePiece::Pawn => PAWN_ATTACK_TABLE
+                    .get()
+                    .expect("Pawn table not initialized."),
             };
 
             pretty_print_bitboard(move_table[square], Some(square));
@@ -469,7 +480,7 @@ mod tests {
     #[test]
     fn test_knight_move_generation() {
         let move_table = precompute_knight_moves();
-        
+
         // Knight on b1 (square 1)
         let b1_moves = move_table[1];
         assert!(b1_moves & (1 << 16) != 0); // a3
@@ -494,7 +505,7 @@ mod tests {
     fn test_white_pieces_bitboard() {
         let board = Chessboard::new();
         let white_pieces = board.white_pieces();
-        
+
         assert!(white_pieces & board.white_pawns != 0);
         assert!(white_pieces & board.white_rooks != 0);
         assert!(white_pieces & board.white_knights != 0);
@@ -508,7 +519,7 @@ mod tests {
     fn test_black_pieces_bitboard() {
         let board = Chessboard::new();
         let black_pieces = board.black_pieces();
-        
+
         assert!(black_pieces & board.black_pawns != 0);
         assert!(black_pieces & board.black_rooks != 0);
         assert!(black_pieces & board.black_knights != 0);
@@ -530,7 +541,10 @@ mod tests {
     #[test]
     fn test_lookup_table_piece_parsing() {
         assert_eq!(parse_lookup_table_piece("N"), Ok(LookupTablePiece::Knight));
-        assert_eq!(parse_lookup_table_piece("KNIGHT"), Ok(LookupTablePiece::Knight));
+        assert_eq!(
+            parse_lookup_table_piece("KNIGHT"),
+            Ok(LookupTablePiece::Knight)
+        );
         assert_eq!(parse_lookup_table_piece("K"), Ok(LookupTablePiece::King));
         assert_eq!(parse_lookup_table_piece("KING"), Ok(LookupTablePiece::King));
         assert_eq!(parse_lookup_table_piece("P"), Ok(LookupTablePiece::Pawn));
