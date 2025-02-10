@@ -1,4 +1,6 @@
 use std::io::{self, Write};
+use std::time::Instant;
+use std::sync::OnceLock;
 
 use clap::{Parser, Subcommand};
 
@@ -13,21 +15,86 @@ struct Cli {
 /// Define commands
 #[derive(Subcommand)]
 enum Commands {
-    /// Converts to/from square ID and standard algebraic notation
+    /// Convert to/from square ID and standard algebraic notation
     Convert { notation: String },
-    /// Exits the program
+
+    /// Exit the program
+    #[clap(visible_aliases = ["quit", "q"])]
     Exit,
+
+    /// For a given square ID, get all valid moves for a knight on that square
+    #[clap(visible_alias = "gvm")]
+    GetValidMoves {
+        /// The chess piece type (KNIGHT, KING, OR PAWN (or N, K, or P))
+        #[clap(value_parser = parse_lookup_table_piece)]
+        piece: LookupTablePiece,
+
+        /// The square to check
+        square: usize,
+    },
 }
 
-/// Represents a bitboard
+/// Pieces with lookup tables
+#[derive(Debug, Clone, Copy)]
+enum LookupTablePiece {
+    Knight,
+    King,
+    Pawn,
+}
+
+/// Custom parser for LookupTablePiece
+fn parse_lookup_table_piece(s: &str) -> Result<LookupTablePiece, String> {
+    match s.to_uppercase().as_str() {
+        "KNIGHT" | "N" => Ok(LookupTablePiece::Knight),
+        "KING" | "K" => Ok(LookupTablePiece::King),
+        "PAWN" | "P" => Ok(LookupTablePiece::Pawn),
+        _ => Err(format!("Invalid piece: {}. Must be KNIGHT, KING, or PAWN (or N, K, or P).", s)),
+    }
+}
+
+/// Represents a chessboard as a u64
 pub type Bitboard = u64;
 
-///// Constants for the bitboard's size and bitmasks
-//const BOARD_SIZE: usize = 64;
-//const FILE_A: Bitboard = 0x0101_0101_0101_0101;
-//const FILE_H: Bitboard = 0x8080_8080_8080_8080;
-//const RANK_1: Bitboard = 0x0000_0000_0000_00FF;
-//const RANK_8: Bitboard = 0xFF00_0000_0000_0000;
+/// Constants for each file/column
+#[allow(dead_code)]
+const FILE_A: Bitboard = 0x0101_0101_0101_0101;
+#[allow(dead_code)]
+const FILE_B: Bitboard = 0x0202_0202_0202_0202;
+#[allow(dead_code)]
+const FILE_C: Bitboard = 0x0404_0404_0404_0404;
+#[allow(dead_code)]
+const FILE_D: Bitboard = 0x0808_0808_0808_0808;
+#[allow(dead_code)]
+const FILE_E: Bitboard = 0x1010_1010_1010_1010;
+#[allow(dead_code)]
+const FILE_F: Bitboard = 0x2020_2020_2020_2020;
+#[allow(dead_code)]
+const FILE_G: Bitboard = 0x4040_4040_4040_4040;
+#[allow(dead_code)]
+const FILE_H: Bitboard = 0x8080_8080_8080_8080;
+
+/// Constants for each rank/row
+#[allow(dead_code)]
+const RANK_1: Bitboard = 0x0000_0000_0000_00FF;
+#[allow(dead_code)]
+const RANK_2: Bitboard = 0x0000_0000_0000_FF00;
+#[allow(dead_code)]
+const RANK_3: Bitboard = 0x0000_0000_00FF_0000;
+#[allow(dead_code)]
+const RANK_4: Bitboard = 0x0000_0000_FF00_0000;
+#[allow(dead_code)]
+const RANK_5: Bitboard = 0x0000_00FF_0000_0000;
+#[allow(dead_code)]
+const RANK_6: Bitboard = 0x0000_FF00_0000_0000;
+#[allow(dead_code)]
+const RANK_7: Bitboard = 0x00FF_0000_0000_0000;
+#[allow(dead_code)]
+const RANK_8: Bitboard = 0xFF00_0000_0000_0000;
+
+/// Store move tables for knights, kings, and pawn attacks
+static KNIGHT_MOVE_TABLE: OnceLock<[u64; 64]> = OnceLock::new();
+static KING_MOVE_TABLE: OnceLock<[u64; 64]> = OnceLock::new();
+static PAWN_ATTACK_TABLE: OnceLock<[u64; 64]> = OnceLock::new();
 
 /// Chessboard made of bitboards representing each piece
 pub struct Chessboard {
@@ -132,13 +199,15 @@ impl Chessboard {
 
     /// Pretty(-ish) print the board
     pub fn display(&self) {
-        for rank in (0..8).rev() {
+        for rank in (0..8).rev() { // Start from rank 8
+            print!("{} ", rank + 1); // Rank labels (1-indexed)
             for file in 0..8 {
                 let square = rank * 8 + file;
                 print!("{} ", self.piece_at(square));
             }
-            println!();
+            println!(); // Each rank on a new line
         }
+        println!("  a b c d e f g h "); // File labels
     }
 
     /// Return a character representation of the piece at a given square
@@ -227,6 +296,54 @@ fn convert_command(input: &String) {
     }
 }
 
+/// Precompute move tables for knights
+fn precompute_knight_moves() -> [Bitboard; 64] {
+    let mut move_table = [0; 64];
+
+    for (square, moves) in move_table.iter_mut().enumerate() {
+        // Set the bit corresponding to the knight's position
+        let bit = 1u64 << square;
+
+        // Create edge masks
+        let not_file_a: Bitboard = !FILE_A;
+        let not_file_h: Bitboard = !FILE_H;
+        let not_file_ab: Bitboard = !(FILE_A | FILE_B);
+        let not_file_gh: Bitboard = !(FILE_G | FILE_H);
+
+        // Calculate valid moves with edge masks
+        *moves |= (bit & not_file_a) << 15; // NNW
+        *moves |= (bit & not_file_h) << 17; // NNE
+        *moves |= (bit & not_file_ab) << 6; // WNW
+        *moves |= (bit & not_file_gh) << 10; // ENE
+        *moves |= (bit & not_file_gh) >> 6; // ESE
+        *moves |= (bit & not_file_ab) >> 10; // WSW
+        *moves |= (bit & not_file_h) >> 15; // SSE
+        *moves |= (bit & not_file_a) >> 17; // SSW
+    }
+
+    move_table
+}
+
+/// Pretty print Bitboard for debugging
+fn pretty_print_bitboard(bitboard: Bitboard, marker: Option<usize>) {
+    for rank in (0..8).rev() { // Start from rank 8
+        print!("{} ", rank + 1); // Rank labels (1-indexed)
+        for file in 0..8 {
+            let square = rank * 8 + file;
+            let mask: Bitboard = 1 << square;
+            if Some(square) == marker {
+                print!("* ") // Draw marker
+            } else if bitboard & mask != 0 {
+                print!("X "); // Occupied square
+            } else {
+                print!(". "); // Empty square
+            }
+        }
+        println!(); // Each rank on a new line
+    }
+    println!("  a b c d e f g h "); // File labels
+}
+
 /// Prompts the user to run commands interactively
 fn interactive_mode() {
     // Generate and print board
@@ -264,10 +381,31 @@ fn handle_command(command: Commands) {
             println!("Bye!");
             std::process::exit(0);
         }
+        Commands::GetValidMoves { square, piece } => {
+            let move_table = match piece {
+                LookupTablePiece::Knight => KNIGHT_MOVE_TABLE.get().expect("Knight table not initialized."),
+                LookupTablePiece::King => KING_MOVE_TABLE.get().expect("King table not initialized."),
+                LookupTablePiece::Pawn => PAWN_ATTACK_TABLE.get().expect("Pawn table not initialized."),
+            };
+
+            pretty_print_bitboard(move_table[square], Some(square));
+        }
     }
 }
 
 pub fn main() {
+    // Precompute moves
+    println!("Precompuing move tables...");
+    let precompute_start_time = Instant::now();
+    let _knight_move_table = KNIGHT_MOVE_TABLE.get_or_init(precompute_knight_moves);
+    let precompute_duration = precompute_start_time.elapsed();
+    println!(
+        "Finished precomputing move tables in {}.{:03}ms ({}ns)",
+        precompute_duration.as_millis(),
+        precompute_duration.as_micros() % 1000,
+        precompute_duration.as_nanos()
+    );
+
     // Process command line args
     let cli = Cli::parse();
     if let Some(command) = cli.command {
