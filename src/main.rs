@@ -328,6 +328,32 @@ fn precompute_knight_moves() -> [Bitboard; 64] {
     move_table
 }
 
+/// Precompute move tables for kings
+fn precompute_king_moves() -> [Bitboard; 64] {
+    let mut move_table = [0; 64];
+
+    for (square, moves) in move_table.iter_mut().enumerate() {
+        // Set the bit corresponding to the king's position
+        let bit = 1u64 << square;
+
+        //  Create edge masks
+        let not_file_a: Bitboard = !FILE_A;
+        let not_file_h: Bitboard = !FILE_H;
+
+        // Calculate valid moves with edge masks
+        *moves |= (bit & not_file_a) << 7; // NW
+        *moves |= bit << 8; // N
+        *moves |= (bit & not_file_h) << 9; // NE
+        *moves |= (bit & not_file_a) >> 1 ; // W
+        *moves |= (bit & not_file_h) << 1; // E
+        *moves |= (bit & not_file_a) >> 9; // SW
+        *moves |= bit >> 8; //S
+        *moves |= (bit & not_file_h) >> 7; // SE
+    }
+
+    move_table
+}
+
 /// Pretty print Bitboard for debugging
 fn pretty_print_bitboard(bitboard: Bitboard, marker: Option<usize>) {
     // Start from rank 8
@@ -386,20 +412,25 @@ fn handle_command(command: Commands) {
             println!("Bye!");
             std::process::exit(0);
         }
+        // TODO: Let this take standard notation as well (ex. a6)
         Commands::GetValidMoves { square, piece } => {
-            let move_table = match piece {
-                LookupTablePiece::Knight => KNIGHT_MOVE_TABLE
-                    .get()
-                    .expect("Knight table not initialized."),
-                LookupTablePiece::King => {
-                    KING_MOVE_TABLE.get().expect("King table not initialized.")
-                }
-                LookupTablePiece::Pawn => PAWN_ATTACK_TABLE
-                    .get()
-                    .expect("Pawn table not initialized."),
-            };
-
-            pretty_print_bitboard(move_table[square], Some(square));
+            if square >= 63 {
+                println!("Invalid square: {}", square)
+            } else {
+                let move_table = match piece {
+                    LookupTablePiece::Knight => KNIGHT_MOVE_TABLE
+                        .get()
+                        .expect("Knight table not initialized."),
+                    LookupTablePiece::King => KING_MOVE_TABLE
+                        .get()
+                        .expect("King table not initialized."),
+                    LookupTablePiece::Pawn => PAWN_ATTACK_TABLE
+                        .get()
+                        .expect("Pawn table not initialized."),
+                };
+                
+                pretty_print_bitboard(move_table[square], Some(square));
+            }
         }
     }
 }
@@ -409,6 +440,7 @@ pub fn main() {
     println!("Precompuing move tables...");
     let precompute_start_time = Instant::now();
     let _knight_move_table = KNIGHT_MOVE_TABLE.get_or_init(precompute_knight_moves);
+    let _king_move_table = KING_MOVE_TABLE.get_or_init(precompute_king_moves);
     let precompute_duration = precompute_start_time.elapsed();
     println!(
         "Finished precomputing move tables in {}.{:03}ms ({}ns)",
@@ -498,6 +530,39 @@ mod tests {
         assert!(d4_moves & (1 << 37) != 0); // f5
         assert!(d4_moves & (1 << 42) != 0); // c6
         assert!(d4_moves & (1 << 44) != 0); // e6
+        assert_eq!(d4_moves.count_ones(), 8); // Eight valid moves
+    }
+
+    #[test]
+    fn test_king_move_generation() {
+        let move_table = precompute_king_moves();
+
+        // King on a1 (square 0)
+        let b0_moves = move_table[0];
+        assert!(b0_moves & (1 << 1) != 0); // b1
+        assert!(b0_moves & (1 << 8) != 0); // a2
+        assert!(b0_moves & (1 << 9) != 0); // b2
+        assert_eq!(b0_moves.count_ones(), 3); // Three valid moves
+
+        // King on b1 (square 1)
+        let b1_moves = move_table[1];
+        assert!(b1_moves & (1 << 0) != 0); // a1
+        assert!(b1_moves & (1 << 2) != 0); // c1
+        assert!(b1_moves & (1 << 8) != 0); // a2
+        assert!(b1_moves & (1 << 9) != 0); // b2
+        assert!(b1_moves & (1 << 10) != 0); // c2
+        assert_eq!(b1_moves.count_ones(), 5); // Three valid moves
+
+        // King on d4 (square 27)
+        let d4_moves = move_table[27];
+        assert!(d4_moves & (1 << 18) != 0); // c3
+        assert!(d4_moves & (1 << 19) != 0); // d3
+        assert!(d4_moves & (1 << 20) != 0); // e3
+        assert!(d4_moves & (1 << 26) != 0); // c4
+        assert!(d4_moves & (1 << 28) != 0); // e4
+        assert!(d4_moves & (1 << 34) != 0); // c5
+        assert!(d4_moves & (1 << 35) != 0); // d5
+        assert!(d4_moves & (1 << 36) != 0); // e5
         assert_eq!(d4_moves.count_ones(), 8); // Eight valid moves
     }
 
