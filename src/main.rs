@@ -35,7 +35,7 @@ enum Commands {
 }
 
 /// Pieces with lookup tables
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 enum LookupTablePiece {
     Knight,
     King,
@@ -428,6 +428,11 @@ mod tests {
         assert_eq!(Chessboard::square_from_notation("d5"), Some(35));
         assert_eq!(Chessboard::square_from_notation("invalid"), None);
         assert_eq!(Chessboard::square_from_notation("a9"), None);
+        assert_eq!(Chessboard::square_from_notation("z5"), None);
+        assert_eq!(Chessboard::square_from_notation("e0"), None);
+        assert_eq!(Chessboard::square_from_notation("h"), None);
+        assert_eq!(Chessboard::square_from_notation("5"), None);
+        assert_eq!(Chessboard::square_from_notation(""), None);
     }
 
     #[test]
@@ -437,6 +442,8 @@ mod tests {
         assert_eq!(Chessboard::notation_from_square(28), Some("e4".to_string()));
         assert_eq!(Chessboard::notation_from_square(35), Some("d5".to_string()));
         assert_eq!(Chessboard::notation_from_square(64), None);
+        assert_eq!(Chessboard::notation_from_square(100), None);
+        assert_eq!(Chessboard::notation_from_square(999), None);
     }
 
     #[test]
@@ -446,5 +453,91 @@ mod tests {
             let back_to_square = Chessboard::square_from_notation(&notation).unwrap();
             assert_eq!(square, back_to_square);
         }
+    }
+
+    #[test]
+    fn test_move_piece() {
+        let mut board = Chessboard::new();
+        assert!(board.is_square_occupied(1)); // Knight on b1
+        assert!(!board.is_square_occupied(18)); // No piece on c3
+
+        board.move_piece(1, 18); // Move knight from b1 to c3
+        assert!(!board.is_square_occupied(1)); // Knight should be gone from b1
+        assert!(board.is_square_occupied(18)); // Knight should be at c3
+    }
+
+    #[test]
+    fn test_knight_move_generation() {
+        let move_table = precompute_knight_moves();
+        
+        // Knight on b1 (square 1)
+        let b1_moves = move_table[1];
+        assert!(b1_moves & (1 << 16) != 0); // a3
+        assert!(b1_moves & (1 << 18) != 0); // c3
+        assert!(b1_moves & (1 << 11) != 0); // d2
+        assert_eq!(b1_moves.count_ones(), 3); // Three valid moves
+
+        // Knight on d4 (square 27)
+        let d4_moves = move_table[27];
+        assert!(d4_moves & (1 << 10) != 0); // c2
+        assert!(d4_moves & (1 << 12) != 0); // e2
+        assert!(d4_moves & (1 << 17) != 0); // b3
+        assert!(d4_moves & (1 << 21) != 0); // f3
+        assert!(d4_moves & (1 << 33) != 0); // b5
+        assert!(d4_moves & (1 << 37) != 0); // f5
+        assert!(d4_moves & (1 << 42) != 0); // c6
+        assert!(d4_moves & (1 << 44) != 0); // e6
+        assert_eq!(d4_moves.count_ones(), 8); // Eight valid moves
+    }
+
+    #[test]
+    fn test_white_pieces_bitboard() {
+        let board = Chessboard::new();
+        let white_pieces = board.white_pieces();
+        
+        assert!(white_pieces & board.white_pawns != 0);
+        assert!(white_pieces & board.white_rooks != 0);
+        assert!(white_pieces & board.white_knights != 0);
+        assert!(white_pieces & board.white_bishops != 0);
+        assert!(white_pieces & board.white_queens != 0);
+        assert!(white_pieces & board.white_kings != 0);
+        assert_eq!(white_pieces.count_ones(), 16); // 16 white pieces at start
+    }
+
+    #[test]
+    fn test_black_pieces_bitboard() {
+        let board = Chessboard::new();
+        let black_pieces = board.black_pieces();
+        
+        assert!(black_pieces & board.black_pawns != 0);
+        assert!(black_pieces & board.black_rooks != 0);
+        assert!(black_pieces & board.black_knights != 0);
+        assert!(black_pieces & board.black_bishops != 0);
+        assert!(black_pieces & board.black_queens != 0);
+        assert!(black_pieces & board.black_kings != 0);
+        assert_eq!(black_pieces.count_ones(), 16); // 16 black pieces at start
+    }
+
+    #[test]
+    fn test_occupied_bitboard() {
+        let board = Chessboard::new();
+        let occupied = board.occupied();
+
+        assert_eq!(occupied.count_ones(), 32); // 32 pieces total
+        assert_eq!(occupied, board.white_pieces() | board.black_pieces()); // Should match all pieces combined
+    }
+
+    #[test]
+    fn test_lookup_table_piece_parsing() {
+        assert_eq!(parse_lookup_table_piece("N"), Ok(LookupTablePiece::Knight));
+        assert_eq!(parse_lookup_table_piece("KNIGHT"), Ok(LookupTablePiece::Knight));
+        assert_eq!(parse_lookup_table_piece("K"), Ok(LookupTablePiece::King));
+        assert_eq!(parse_lookup_table_piece("KING"), Ok(LookupTablePiece::King));
+        assert_eq!(parse_lookup_table_piece("P"), Ok(LookupTablePiece::Pawn));
+        assert_eq!(parse_lookup_table_piece("PAWN"), Ok(LookupTablePiece::Pawn));
+        assert!(parse_lookup_table_piece("QUEEN").is_err());
+        assert!(parse_lookup_table_piece("BISHOP").is_err());
+        assert!(parse_lookup_table_piece("X").is_err());
+        assert!(parse_lookup_table_piece("").is_err());
     }
 }
