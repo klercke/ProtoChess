@@ -344,7 +344,7 @@ fn precompute_king_moves() -> [Bitboard; 64] {
         *moves |= (bit & not_file_a) << 7; // NW
         *moves |= bit << 8; // N
         *moves |= (bit & not_file_h) << 9; // NE
-        *moves |= (bit & not_file_a) >> 1 ; // W
+        *moves |= (bit & not_file_a) >> 1; // W
         *moves |= (bit & not_file_h) << 1; // E
         *moves |= (bit & not_file_a) >> 9; // SW
         *moves |= bit >> 8; //S
@@ -421,14 +421,14 @@ fn handle_command(command: Commands) {
                     LookupTablePiece::Knight => KNIGHT_MOVE_TABLE
                         .get()
                         .expect("Knight table not initialized."),
-                    LookupTablePiece::King => KING_MOVE_TABLE
-                        .get()
-                        .expect("King table not initialized."),
+                    LookupTablePiece::King => {
+                        KING_MOVE_TABLE.get().expect("King table not initialized.")
+                    }
                     LookupTablePiece::Pawn => PAWN_ATTACK_TABLE
                         .get()
                         .expect("Pawn table not initialized."),
                 };
-                
+
                 pretty_print_bitboard(move_table[square], Some(square));
             }
         }
