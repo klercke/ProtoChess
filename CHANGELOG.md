@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.4.0] - 2025-02-11
+
+### 🚀 Features
+
+- *(game)* Add lookup table for valid knight moves
+- *(game)* Add king move precalculations
+- *(game)* Add pawn attack precomputation
+
+### 🐛 Bug Fixes
+
+- *(get-valid-moves)* Incorrectly marked square 63 invalid
+
+### 🧪 Testing
+
+- *(chessboard)* Add extended tests
+
+### ⚙️ Miscellaneous Tasks
+
+- *(release)* Remove asset links
+- Run cargo fmt
+- Cargo fmt
+- Add justfile
+- Cargo fmt
+
 ## [0.3.2] - 2025-01-30
 
 ### ⚙️ Miscellaneous Tasks
