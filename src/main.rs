@@ -39,7 +39,8 @@ enum Commands {
 enum LookupTablePiece {
     Knight,
     King,
-    Pawn,
+    WhitePawn,
+    BlackPawn,
 }
 
 /// Custom parser for LookupTablePiece
@@ -47,7 +48,8 @@ fn parse_lookup_table_piece(s: &str) -> Result<LookupTablePiece, String> {
     match s.to_uppercase().as_str() {
         "KNIGHT" | "N" => Ok(LookupTablePiece::Knight),
         "KING" | "K" => Ok(LookupTablePiece::King),
-        "PAWN" | "P" => Ok(LookupTablePiece::Pawn),
+        "WHITEPAWN" | "W" => Ok(LookupTablePiece::WhitePawn),
+        "BLACKPAWN" | "B" => Ok(LookupTablePiece::BlackPawn),
         _ => Err(format!(
             "Invalid piece: {}. Must be KNIGHT, KING, or PAWN (or N, K, or P).",
             s
@@ -95,9 +97,10 @@ const RANK_7: Bitboard = 0x00FF_0000_0000_0000;
 const RANK_8: Bitboard = 0xFF00_0000_0000_0000;
 
 /// Store move tables for knights, kings, and pawn attacks
-static KNIGHT_MOVE_TABLE: OnceLock<[u64; 64]> = OnceLock::new();
-static KING_MOVE_TABLE: OnceLock<[u64; 64]> = OnceLock::new();
-static PAWN_ATTACK_TABLE: OnceLock<[u64; 64]> = OnceLock::new();
+static KNIGHT_MOVE_TABLE: OnceLock<[Bitboard; 64]> = OnceLock::new();
+static KING_MOVE_TABLE: OnceLock<[Bitboard; 64]> = OnceLock::new();
+static WHITE_PAWN_ATTACK_TABLE: OnceLock<[Bitboard; 64]> = OnceLock::new();
+static BLACK_PAWN_ATTACK_TABLE: OnceLock<[Bitboard; 64]> = OnceLock::new();
 
 /// Chessboard made of bitboards representing each piece
 pub struct Chessboard {
@@ -336,7 +339,7 @@ fn precompute_king_moves() -> [Bitboard; 64] {
         // Set the bit corresponding to the king's position
         let bit = 1u64 << square;
 
-        //  Create edge masks
+        // Create edge masks
         let not_file_a: Bitboard = !FILE_A;
         let not_file_h: Bitboard = !FILE_H;
 
@@ -352,6 +355,29 @@ fn precompute_king_moves() -> [Bitboard; 64] {
     }
 
     move_table
+}
+
+/// Precompute attack tables for pawns
+fn precompute_pawn_attacks() -> ([Bitboard; 64], [Bitboard; 64]) {
+    let mut black_attack_table = [0; 64];
+    let mut white_attack_table = [0; 64];
+    
+    for square in 0..64 {
+        // Set the bit corresponding to the pawn's position
+        let bit = 1u64 << square;
+
+        // Create edge masks
+        let not_file_a: Bitboard = !FILE_A;
+        let not_file_h: Bitboard = !FILE_H;
+
+        // Calculate valid moves with edge masks
+        black_attack_table[square] |= (bit >> 7) & not_file_a;
+        black_attack_table[square] |= (bit >> 9) & not_file_h;
+        white_attack_table[square] |= (bit << 7) & not_file_h;
+        white_attack_table[square] |= (bit << 9) & not_file_a;
+    }
+
+    (black_attack_table, white_attack_table)
 }
 
 /// Pretty print Bitboard for debugging
@@ -424,7 +450,10 @@ fn handle_command(command: Commands) {
                     LookupTablePiece::King => {
                         KING_MOVE_TABLE.get().expect("King table not initialized.")
                     }
-                    LookupTablePiece::Pawn => PAWN_ATTACK_TABLE
+                    LookupTablePiece::WhitePawn => WHITE_PAWN_ATTACK_TABLE
+                        .get()
+                        .expect("Pawn table not initialized."),
+                    LookupTablePiece::BlackPawn => BLACK_PAWN_ATTACK_TABLE
                         .get()
                         .expect("Pawn table not initialized."),
                 };
@@ -441,6 +470,9 @@ pub fn main() {
     let precompute_start_time = Instant::now();
     let _knight_move_table = KNIGHT_MOVE_TABLE.get_or_init(precompute_knight_moves);
     let _king_move_table = KING_MOVE_TABLE.get_or_init(precompute_king_moves);
+    let (black_pawn_table, white_pawn_table) = precompute_pawn_attacks();
+    let _black_pawn_attack_table = BLACK_PAWN_ATTACK_TABLE.get_or_init(|| black_pawn_table);
+    let _white_pawn_attack_table = WHITE_PAWN_ATTACK_TABLE.get_or_init(|| white_pawn_table);
     let precompute_duration = precompute_start_time.elapsed();
     println!(
         "Finished precomputing move tables in {}.{:03}ms ({}ns)",
@@ -538,11 +570,11 @@ mod tests {
         let move_table = precompute_king_moves();
 
         // King on a1 (square 0)
-        let b0_moves = move_table[0];
-        assert!(b0_moves & (1 << 1) != 0); // b1
-        assert!(b0_moves & (1 << 8) != 0); // a2
-        assert!(b0_moves & (1 << 9) != 0); // b2
-        assert_eq!(b0_moves.count_ones(), 3); // Three valid moves
+        let a1_moves = move_table[0];
+        assert!(a1_moves & (1 << 1) != 0); // b1
+        assert!(a1_moves & (1 << 8) != 0); // a2
+        assert!(a1_moves & (1 << 9) != 0); // b2
+        assert_eq!(a1_moves.count_ones(), 3); // Three valid moves
 
         // King on b1 (square 1)
         let b1_moves = move_table[1];
@@ -564,6 +596,42 @@ mod tests {
         assert!(d4_moves & (1 << 35) != 0); // d5
         assert!(d4_moves & (1 << 36) != 0); // e5
         assert_eq!(d4_moves.count_ones(), 8); // Eight valid moves
+    }
+
+    #[test]
+    fn test_pawn_attack_generation() {
+        let (black_attack_table, white_attack_table) = precompute_pawn_attacks();
+
+        // Black pawn on a1 (square 0)
+        let a1_black_attacks = black_attack_table[0];
+        assert_eq!(a1_black_attacks.count_ones(), 0); // Zero valid moves
+
+        // Black pawn on h8 (square 63)
+        let h8_black_attacks = black_attack_table[63];
+        assert!(h8_black_attacks & (1 << 54) != 0); // g7
+        assert_eq!(h8_black_attacks.count_ones(), 1); // One valid move
+        
+        // Black pawn on d4 (square 27)
+        let d4_black_attacks = black_attack_table[27];
+        assert!(d4_black_attacks & (1 << 18) != 0); // c3
+        assert!(d4_black_attacks & (1 << 20) != 0); // e3
+        assert_eq!(d4_black_attacks.count_ones(), 2); // Two valid moves
+        
+        // White pawn on a1 (square 0)
+        let a1_white_attacks = white_attack_table[0];
+        assert!(a1_white_attacks & (1 << 9) != 0); // b2
+        assert_eq!(a1_white_attacks.count_ones(), 1); // One valid move
+
+        // White pawn on h8 (square 63)
+        let h8_white_attacks = white_attack_table[63];
+        assert_eq!(h8_white_attacks.count_ones(), 0); // Zero valid moves
+        
+        // White pawn on d4 (square 27)
+        let d4_white_attacks = white_attack_table[27];
+        assert!(d4_white_attacks & (1 << 34) != 0); // c5
+        assert!(d4_white_attacks & (1 << 36) != 0); // e5
+        assert_eq!(d4_white_attacks.count_ones(), 2); // Two valid moves
+
     }
 
     #[test]
@@ -612,8 +680,10 @@ mod tests {
         );
         assert_eq!(parse_lookup_table_piece("K"), Ok(LookupTablePiece::King));
         assert_eq!(parse_lookup_table_piece("KING"), Ok(LookupTablePiece::King));
-        assert_eq!(parse_lookup_table_piece("P"), Ok(LookupTablePiece::Pawn));
-        assert_eq!(parse_lookup_table_piece("PAWN"), Ok(LookupTablePiece::Pawn));
+        assert_eq!(parse_lookup_table_piece("B"), Ok(LookupTablePiece::BlackPawn));
+        assert_eq!(parse_lookup_table_piece("BLACKPAWN"), Ok(LookupTablePiece::BlackPawn));
+        assert_eq!(parse_lookup_table_piece("W"), Ok(LookupTablePiece::WhitePawn));
+        assert_eq!(parse_lookup_table_piece("WHITEPAWN"), Ok(LookupTablePiece::WhitePawn));
         assert!(parse_lookup_table_piece("QUEEN").is_err());
         assert!(parse_lookup_table_piece("BISHOP").is_err());
         assert!(parse_lookup_table_piece("X").is_err());
