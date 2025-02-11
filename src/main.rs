@@ -361,7 +361,7 @@ fn precompute_king_moves() -> [Bitboard; 64] {
 fn precompute_pawn_attacks() -> ([Bitboard; 64], [Bitboard; 64]) {
     let mut black_attack_table = [0; 64];
     let mut white_attack_table = [0; 64];
-    
+
     for square in 0..64 {
         // Set the bit corresponding to the pawn's position
         let bit = 1u64 << square;
@@ -610,13 +610,13 @@ mod tests {
         let h8_black_attacks = black_attack_table[63];
         assert!(h8_black_attacks & (1 << 54) != 0); // g7
         assert_eq!(h8_black_attacks.count_ones(), 1); // One valid move
-        
+
         // Black pawn on d4 (square 27)
         let d4_black_attacks = black_attack_table[27];
         assert!(d4_black_attacks & (1 << 18) != 0); // c3
         assert!(d4_black_attacks & (1 << 20) != 0); // e3
         assert_eq!(d4_black_attacks.count_ones(), 2); // Two valid moves
-        
+
         // White pawn on a1 (square 0)
         let a1_white_attacks = white_attack_table[0];
         assert!(a1_white_attacks & (1 << 9) != 0); // b2
@@ -625,13 +625,12 @@ mod tests {
         // White pawn on h8 (square 63)
         let h8_white_attacks = white_attack_table[63];
         assert_eq!(h8_white_attacks.count_ones(), 0); // Zero valid moves
-        
+
         // White pawn on d4 (square 27)
         let d4_white_attacks = white_attack_table[27];
         assert!(d4_white_attacks & (1 << 34) != 0); // c5
         assert!(d4_white_attacks & (1 << 36) != 0); // e5
         assert_eq!(d4_white_attacks.count_ones(), 2); // Two valid moves
-
     }
 
     #[test]
@@ -680,10 +679,22 @@ mod tests {
         );
         assert_eq!(parse_lookup_table_piece("K"), Ok(LookupTablePiece::King));
         assert_eq!(parse_lookup_table_piece("KING"), Ok(LookupTablePiece::King));
-        assert_eq!(parse_lookup_table_piece("B"), Ok(LookupTablePiece::BlackPawn));
-        assert_eq!(parse_lookup_table_piece("BLACKPAWN"), Ok(LookupTablePiece::BlackPawn));
-        assert_eq!(parse_lookup_table_piece("W"), Ok(LookupTablePiece::WhitePawn));
-        assert_eq!(parse_lookup_table_piece("WHITEPAWN"), Ok(LookupTablePiece::WhitePawn));
+        assert_eq!(
+            parse_lookup_table_piece("B"),
+            Ok(LookupTablePiece::BlackPawn)
+        );
+        assert_eq!(
+            parse_lookup_table_piece("BLACKPAWN"),
+            Ok(LookupTablePiece::BlackPawn)
+        );
+        assert_eq!(
+            parse_lookup_table_piece("W"),
+            Ok(LookupTablePiece::WhitePawn)
+        );
+        assert_eq!(
+            parse_lookup_table_piece("WHITEPAWN"),
+            Ok(LookupTablePiece::WhitePawn)
+        );
         assert!(parse_lookup_table_piece("QUEEN").is_err());
         assert!(parse_lookup_table_piece("BISHOP").is_err());
         assert!(parse_lookup_table_piece("X").is_err());
