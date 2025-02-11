@@ -414,7 +414,7 @@ fn handle_command(command: Commands) {
         }
         // TODO: Let this take standard notation as well (ex. a6)
         Commands::GetValidMoves { square, piece } => {
-            if square >= 63 {
+            if square > 63 {
                 println!("Invalid square: {}", square)
             } else {
                 let move_table = match piece {
