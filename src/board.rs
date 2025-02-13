@@ -2,6 +2,12 @@ use crate::masks;
 
 use std::sync::OnceLock;
 
+/// Store move tables for knig
+pub static KNIGHT_MOVE_TABLE: OnceLock<[Bitboard; 64]> = OnceLock::new();
+pub static KING_MOVE_TABLE: OnceLock<[Bitboard; 64]> = OnceLock::new();
+pub static WHITE_PAWN_ATTACK_TABLE: OnceLock<[Bitboard; 64]> = OnceLock::new();
+pub static BLACK_PAWN_ATTACK_TABLE: OnceLock<[Bitboard; 64]> = OnceLock::new();
+
 /// Represents a chessboard as a u64
 pub type Bitboard = u64;
 
@@ -187,12 +193,6 @@ impl Chessboard {
         Some(format!("{}{}", file as char, rank as char))
     }
 }
-
-/// Store move tables for knights, kings, and pawn attacks
-pub static KNIGHT_MOVE_TABLE: OnceLock<[Bitboard; 64]> = OnceLock::new();
-pub static KING_MOVE_TABLE: OnceLock<[Bitboard; 64]> = OnceLock::new();
-pub static WHITE_PAWN_ATTACK_TABLE: OnceLock<[Bitboard; 64]> = OnceLock::new();
-pub static BLACK_PAWN_ATTACK_TABLE: OnceLock<[Bitboard; 64]> = OnceLock::new();
 
 /// Precompute move tables for knights
 pub fn precompute_knight_moves() -> [Bitboard; 64] {

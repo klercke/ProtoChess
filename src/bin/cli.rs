@@ -1,7 +1,7 @@
 use protochess::board::{self, Bitboard, Chessboard};
+use protochess::init;
 
 use std::io::{self, Write};
-use std::time::Instant;
 
 use clap::{Parser, Subcommand};
 
@@ -161,21 +161,7 @@ fn handle_command(command: Commands) {
 }
 
 pub fn main() {
-    // Precompute moves
-    println!("Precompuing move tables...");
-    let precompute_start_time = Instant::now();
-    let _knight_move_table = board::KNIGHT_MOVE_TABLE.get_or_init(board::precompute_knight_moves);
-    let _king_move_table = board::KING_MOVE_TABLE.get_or_init(board::precompute_king_moves);
-    let (black_pawn_table, white_pawn_table) = board::precompute_pawn_attacks();
-    let _black_pawn_attack_table = board::BLACK_PAWN_ATTACK_TABLE.get_or_init(|| black_pawn_table);
-    let _white_pawn_attack_table = board::WHITE_PAWN_ATTACK_TABLE.get_or_init(|| white_pawn_table);
-    let precompute_duration = precompute_start_time.elapsed();
-    println!(
-        "Finished precomputing move tables in {}.{:03}ms ({}ns)",
-        precompute_duration.as_millis(),
-        precompute_duration.as_micros() % 1000,
-        precompute_duration.as_nanos()
-    );
+    init::precompute();
 
     // Process command line args
     let cli = Cli::parse();
