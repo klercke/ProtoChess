@@ -21,3 +21,6 @@ build:
 run:
   cargo run --release
 
+cli:
+  cargo run --bin cli --release
+

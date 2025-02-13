@@ -1,106 +1,9 @@
-use std::io::{self, Write};
+use crate::masks;
+
 use std::sync::OnceLock;
-use std::time::Instant;
-
-use clap::{Parser, Subcommand};
-
-/// Define command-line args
-#[derive(Parser)]
-#[command(version, about, long_about = None)]
-struct Cli {
-    #[command(subcommand)]
-    command: Option<Commands>,
-}
-
-/// Define commands
-#[derive(Subcommand)]
-enum Commands {
-    /// Convert to/from square ID and standard algebraic notation
-    Convert { notation: String },
-
-    /// Exit the program
-    #[clap(visible_aliases = ["quit", "q"])]
-    Exit,
-
-    /// For a given square ID, get all valid moves for a knight on that square
-    #[clap(visible_alias = "gvm")]
-    GetValidMoves {
-        /// The chess piece type (KNIGHT, KING, OR PAWN (or N, K, or P))
-        #[clap(value_parser = parse_lookup_table_piece)]
-        piece: LookupTablePiece,
-
-        /// The square to check
-        square: usize,
-    },
-}
-
-/// Pieces with lookup tables
-#[derive(Debug, Clone, Copy, PartialEq)]
-enum LookupTablePiece {
-    Knight,
-    King,
-    WhitePawn,
-    BlackPawn,
-}
-
-/// Custom parser for LookupTablePiece
-fn parse_lookup_table_piece(s: &str) -> Result<LookupTablePiece, String> {
-    match s.to_uppercase().as_str() {
-        "KNIGHT" | "N" => Ok(LookupTablePiece::Knight),
-        "KING" | "K" => Ok(LookupTablePiece::King),
-        "WHITEPAWN" | "W" => Ok(LookupTablePiece::WhitePawn),
-        "BLACKPAWN" | "B" => Ok(LookupTablePiece::BlackPawn),
-        _ => Err(format!(
-            "Invalid piece: {}. Must be KNIGHT, KING, or PAWN (or N, K, or P).",
-            s
-        )),
-    }
-}
 
 /// Represents a chessboard as a u64
 pub type Bitboard = u64;
-
-/// Constants for each file/column
-#[allow(dead_code)]
-const FILE_A: Bitboard = 0x0101_0101_0101_0101;
-#[allow(dead_code)]
-const FILE_B: Bitboard = 0x0202_0202_0202_0202;
-#[allow(dead_code)]
-const FILE_C: Bitboard = 0x0404_0404_0404_0404;
-#[allow(dead_code)]
-const FILE_D: Bitboard = 0x0808_0808_0808_0808;
-#[allow(dead_code)]
-const FILE_E: Bitboard = 0x1010_1010_1010_1010;
-#[allow(dead_code)]
-const FILE_F: Bitboard = 0x2020_2020_2020_2020;
-#[allow(dead_code)]
-const FILE_G: Bitboard = 0x4040_4040_4040_4040;
-#[allow(dead_code)]
-const FILE_H: Bitboard = 0x8080_8080_8080_8080;
-
-/// Constants for each rank/row
-#[allow(dead_code)]
-const RANK_1: Bitboard = 0x0000_0000_0000_00FF;
-#[allow(dead_code)]
-const RANK_2: Bitboard = 0x0000_0000_0000_FF00;
-#[allow(dead_code)]
-const RANK_3: Bitboard = 0x0000_0000_00FF_0000;
-#[allow(dead_code)]
-const RANK_4: Bitboard = 0x0000_0000_FF00_0000;
-#[allow(dead_code)]
-const RANK_5: Bitboard = 0x0000_00FF_0000_0000;
-#[allow(dead_code)]
-const RANK_6: Bitboard = 0x0000_FF00_0000_0000;
-#[allow(dead_code)]
-const RANK_7: Bitboard = 0x00FF_0000_0000_0000;
-#[allow(dead_code)]
-const RANK_8: Bitboard = 0xFF00_0000_0000_0000;
-
-/// Store move tables for knights, kings, and pawn attacks
-static KNIGHT_MOVE_TABLE: OnceLock<[Bitboard; 64]> = OnceLock::new();
-static KING_MOVE_TABLE: OnceLock<[Bitboard; 64]> = OnceLock::new();
-static WHITE_PAWN_ATTACK_TABLE: OnceLock<[Bitboard; 64]> = OnceLock::new();
-static BLACK_PAWN_ATTACK_TABLE: OnceLock<[Bitboard; 64]> = OnceLock::new();
 
 /// Chessboard made of bitboards representing each piece
 pub struct Chessboard {
@@ -285,26 +188,14 @@ impl Chessboard {
     }
 }
 
-/// Calls the relevant function to convert between square ID and algebraic notation
-fn convert_command(input: &String) {
-    if let Ok(square) = input.parse::<usize>() {
-        if let Some(notation) = Chessboard::notation_from_square(square) {
-            println!("{}", notation);
-        } else {
-            println!("Invalid square ID: {}", square);
-        }
-    } else if let Some(square) = Chessboard::square_from_notation(input) {
-        println!("{}", square);
-    } else {
-        println!(
-            "Could not interpret {} as algebraic notation or square ID",
-            input
-        );
-    }
-}
+/// Store move tables for knights, kings, and pawn attacks
+pub static KNIGHT_MOVE_TABLE: OnceLock<[Bitboard; 64]> = OnceLock::new();
+pub static KING_MOVE_TABLE: OnceLock<[Bitboard; 64]> = OnceLock::new();
+pub static WHITE_PAWN_ATTACK_TABLE: OnceLock<[Bitboard; 64]> = OnceLock::new();
+pub static BLACK_PAWN_ATTACK_TABLE: OnceLock<[Bitboard; 64]> = OnceLock::new();
 
 /// Precompute move tables for knights
-fn precompute_knight_moves() -> [Bitboard; 64] {
+pub fn precompute_knight_moves() -> [Bitboard; 64] {
     let mut move_table = [0; 64];
 
     for (square, moves) in move_table.iter_mut().enumerate() {
@@ -312,10 +203,10 @@ fn precompute_knight_moves() -> [Bitboard; 64] {
         let bit = 1u64 << square;
 
         // Create edge masks
-        let not_file_a: Bitboard = !FILE_A;
-        let not_file_h: Bitboard = !FILE_H;
-        let not_file_ab: Bitboard = !(FILE_A | FILE_B);
-        let not_file_gh: Bitboard = !(FILE_G | FILE_H);
+        let not_file_a: Bitboard = !masks::FILE_A;
+        let not_file_h: Bitboard = !masks::FILE_H;
+        let not_file_ab: Bitboard = !(masks::FILE_A | masks::FILE_B);
+        let not_file_gh: Bitboard = !(masks::FILE_G | masks::FILE_H);
 
         // Calculate valid moves with edge masks
         *moves |= (bit & not_file_a) << 15; // NNW
@@ -332,7 +223,7 @@ fn precompute_knight_moves() -> [Bitboard; 64] {
 }
 
 /// Precompute move tables for kings
-fn precompute_king_moves() -> [Bitboard; 64] {
+pub fn precompute_king_moves() -> [Bitboard; 64] {
     let mut move_table = [0; 64];
 
     for (square, moves) in move_table.iter_mut().enumerate() {
@@ -340,8 +231,8 @@ fn precompute_king_moves() -> [Bitboard; 64] {
         let bit = 1u64 << square;
 
         // Create edge masks
-        let not_file_a: Bitboard = !FILE_A;
-        let not_file_h: Bitboard = !FILE_H;
+        let not_file_a: Bitboard = !masks::FILE_A;
+        let not_file_h: Bitboard = !masks::FILE_H;
 
         // Calculate valid moves with edge masks
         *moves |= (bit & not_file_a) << 7; // NW
@@ -358,7 +249,7 @@ fn precompute_king_moves() -> [Bitboard; 64] {
 }
 
 /// Precompute attack tables for pawns
-fn precompute_pawn_attacks() -> ([Bitboard; 64], [Bitboard; 64]) {
+pub fn precompute_pawn_attacks() -> ([Bitboard; 64], [Bitboard; 64]) {
     let mut black_attack_table = [0; 64];
     let mut white_attack_table = [0; 64];
 
@@ -367,8 +258,8 @@ fn precompute_pawn_attacks() -> ([Bitboard; 64], [Bitboard; 64]) {
         let bit = 1u64 << square;
 
         // Create edge masks
-        let not_file_a: Bitboard = !FILE_A;
-        let not_file_h: Bitboard = !FILE_H;
+        let not_file_a: Bitboard = !masks::FILE_A;
+        let not_file_h: Bitboard = !masks::FILE_H;
 
         // Calculate valid moves with edge masks
         black_attack_table[square] |= (bit >> 7) & not_file_a;
@@ -380,166 +271,9 @@ fn precompute_pawn_attacks() -> ([Bitboard; 64], [Bitboard; 64]) {
     (black_attack_table, white_attack_table)
 }
 
-/// Pretty print Bitboard for debugging
-fn pretty_print_bitboard(bitboard: Bitboard, marker: Option<usize>) {
-    // Start from rank 8
-    for rank in (0..8).rev() {
-        print!("{} ", rank + 1); // Rank labels (1-indexed)
-        for file in 0..8 {
-            let square = rank * 8 + file;
-            let mask: Bitboard = 1 << square;
-            if Some(square) == marker {
-                print!("* ") // Draw marker
-            } else if bitboard & mask != 0 {
-                print!("X "); // Occupied square
-            } else {
-                print!(". "); // Empty square
-            }
-        }
-        println!(); // Each rank on a new line
-    }
-    println!("  a b c d e f g h "); // File labels
-}
-
-/// Prompts the user to run commands interactively
-fn interactive_mode() {
-    // Generate and print board
-    let board = Chessboard::new();
-    board.display();
-
-    loop {
-        // Get command from user
-        print!("PC> ");
-        io::stdout().flush().unwrap();
-        let mut input = String::new();
-        io::stdin().read_line(&mut input).unwrap();
-        let input = input.trim().to_string();
-
-        // Process command
-        let args: Vec<String> = input.split_whitespace().map(String::from).collect();
-        match Cli::try_parse_from(std::iter::once("").chain(args.iter().map(String::as_str))) {
-            Ok(cli) => {
-                if let Some(command) = cli.command {
-                    handle_command(command);
-                }
-            }
-            Err(e) => println!("{}", e),
-        }
-    }
-}
-
-/// Processes commands and arguments
-fn handle_command(command: Commands) {
-    match command {
-        Commands::Convert { notation } => {
-            convert_command(&notation);
-        }
-        Commands::Exit => {
-            println!("Bye!");
-            std::process::exit(0);
-        }
-        // TODO: Let this take standard notation as well (ex. a6)
-        Commands::GetValidMoves { square, piece } => {
-            if square > 63 {
-                println!("Invalid square: {}", square)
-            } else {
-                let move_table = match piece {
-                    LookupTablePiece::Knight => KNIGHT_MOVE_TABLE
-                        .get()
-                        .expect("Knight table not initialized."),
-                    LookupTablePiece::King => {
-                        KING_MOVE_TABLE.get().expect("King table not initialized.")
-                    }
-                    LookupTablePiece::WhitePawn => WHITE_PAWN_ATTACK_TABLE
-                        .get()
-                        .expect("Pawn table not initialized."),
-                    LookupTablePiece::BlackPawn => BLACK_PAWN_ATTACK_TABLE
-                        .get()
-                        .expect("Pawn table not initialized."),
-                };
-
-                pretty_print_bitboard(move_table[square], Some(square));
-            }
-        }
-    }
-}
-
-pub fn main() {
-    // Precompute moves
-    println!("Precompuing move tables...");
-    let precompute_start_time = Instant::now();
-    let _knight_move_table = KNIGHT_MOVE_TABLE.get_or_init(precompute_knight_moves);
-    let _king_move_table = KING_MOVE_TABLE.get_or_init(precompute_king_moves);
-    let (black_pawn_table, white_pawn_table) = precompute_pawn_attacks();
-    let _black_pawn_attack_table = BLACK_PAWN_ATTACK_TABLE.get_or_init(|| black_pawn_table);
-    let _white_pawn_attack_table = WHITE_PAWN_ATTACK_TABLE.get_or_init(|| white_pawn_table);
-    let precompute_duration = precompute_start_time.elapsed();
-    println!(
-        "Finished precomputing move tables in {}.{:03}ms ({}ns)",
-        precompute_duration.as_millis(),
-        precompute_duration.as_micros() % 1000,
-        precompute_duration.as_nanos()
-    );
-
-    // Process command line args
-    let cli = Cli::parse();
-    if let Some(command) = cli.command {
-        handle_command(command);
-    } else {
-        // Go into interactive mode if no command is supplied
-        interactive_mode();
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn test_square_from_notation() {
-        assert_eq!(Chessboard::square_from_notation("a1"), Some(0));
-        assert_eq!(Chessboard::square_from_notation("h8"), Some(63));
-        assert_eq!(Chessboard::square_from_notation("e4"), Some(28));
-        assert_eq!(Chessboard::square_from_notation("d5"), Some(35));
-        assert_eq!(Chessboard::square_from_notation("invalid"), None);
-        assert_eq!(Chessboard::square_from_notation("a9"), None);
-        assert_eq!(Chessboard::square_from_notation("z5"), None);
-        assert_eq!(Chessboard::square_from_notation("e0"), None);
-        assert_eq!(Chessboard::square_from_notation("h"), None);
-        assert_eq!(Chessboard::square_from_notation("5"), None);
-        assert_eq!(Chessboard::square_from_notation(""), None);
-    }
-
-    #[test]
-    fn test_notation_from_square() {
-        assert_eq!(Chessboard::notation_from_square(0), Some("a1".to_string()));
-        assert_eq!(Chessboard::notation_from_square(63), Some("h8".to_string()));
-        assert_eq!(Chessboard::notation_from_square(28), Some("e4".to_string()));
-        assert_eq!(Chessboard::notation_from_square(35), Some("d5".to_string()));
-        assert_eq!(Chessboard::notation_from_square(64), None);
-        assert_eq!(Chessboard::notation_from_square(100), None);
-        assert_eq!(Chessboard::notation_from_square(999), None);
-    }
-
-    #[test]
-    fn test_round_trip_conversion() {
-        for square in 0..64 {
-            let notation = Chessboard::notation_from_square(square).unwrap();
-            let back_to_square = Chessboard::square_from_notation(&notation).unwrap();
-            assert_eq!(square, back_to_square);
-        }
-    }
-
-    #[test]
-    fn test_move_piece() {
-        let mut board = Chessboard::new();
-        assert!(board.is_square_occupied(1)); // Knight on b1
-        assert!(!board.is_square_occupied(18)); // No piece on c3
-
-        board.move_piece(1, 18); // Move knight from b1 to c3
-        assert!(!board.is_square_occupied(1)); // Knight should be gone from b1
-        assert!(board.is_square_occupied(18)); // Knight should be at c3
-    }
 
     #[test]
     fn test_knight_move_generation() {
@@ -634,6 +368,17 @@ mod tests {
     }
 
     #[test]
+    fn test_move_piece() {
+        let mut board = Chessboard::new();
+        assert!(board.is_square_occupied(1)); // Knight on b1
+        assert!(!board.is_square_occupied(18)); // No piece on c3
+
+        board.move_piece(1, 18); // Move knight from b1 to c3
+        assert!(!board.is_square_occupied(1)); // Knight should be gone from b1
+        assert!(board.is_square_occupied(18)); // Knight should be at c3
+    }
+
+    #[test]
     fn test_white_pieces_bitboard() {
         let board = Chessboard::new();
         let white_pieces = board.white_pieces();
@@ -671,33 +416,37 @@ mod tests {
     }
 
     #[test]
-    fn test_lookup_table_piece_parsing() {
-        assert_eq!(parse_lookup_table_piece("N"), Ok(LookupTablePiece::Knight));
-        assert_eq!(
-            parse_lookup_table_piece("KNIGHT"),
-            Ok(LookupTablePiece::Knight)
-        );
-        assert_eq!(parse_lookup_table_piece("K"), Ok(LookupTablePiece::King));
-        assert_eq!(parse_lookup_table_piece("KING"), Ok(LookupTablePiece::King));
-        assert_eq!(
-            parse_lookup_table_piece("B"),
-            Ok(LookupTablePiece::BlackPawn)
-        );
-        assert_eq!(
-            parse_lookup_table_piece("BLACKPAWN"),
-            Ok(LookupTablePiece::BlackPawn)
-        );
-        assert_eq!(
-            parse_lookup_table_piece("W"),
-            Ok(LookupTablePiece::WhitePawn)
-        );
-        assert_eq!(
-            parse_lookup_table_piece("WHITEPAWN"),
-            Ok(LookupTablePiece::WhitePawn)
-        );
-        assert!(parse_lookup_table_piece("QUEEN").is_err());
-        assert!(parse_lookup_table_piece("BISHOP").is_err());
-        assert!(parse_lookup_table_piece("X").is_err());
-        assert!(parse_lookup_table_piece("").is_err());
+    fn test_square_from_notation() {
+        assert_eq!(Chessboard::square_from_notation("a1"), Some(0));
+        assert_eq!(Chessboard::square_from_notation("h8"), Some(63));
+        assert_eq!(Chessboard::square_from_notation("e4"), Some(28));
+        assert_eq!(Chessboard::square_from_notation("d5"), Some(35));
+        assert_eq!(Chessboard::square_from_notation("invalid"), None);
+        assert_eq!(Chessboard::square_from_notation("a9"), None);
+        assert_eq!(Chessboard::square_from_notation("z5"), None);
+        assert_eq!(Chessboard::square_from_notation("e0"), None);
+        assert_eq!(Chessboard::square_from_notation("h"), None);
+        assert_eq!(Chessboard::square_from_notation("5"), None);
+        assert_eq!(Chessboard::square_from_notation(""), None);
+    }
+
+    #[test]
+    fn test_notation_from_square() {
+        assert_eq!(Chessboard::notation_from_square(0), Some("a1".to_string()));
+        assert_eq!(Chessboard::notation_from_square(63), Some("h8".to_string()));
+        assert_eq!(Chessboard::notation_from_square(28), Some("e4".to_string()));
+        assert_eq!(Chessboard::notation_from_square(35), Some("d5".to_string()));
+        assert_eq!(Chessboard::notation_from_square(64), None);
+        assert_eq!(Chessboard::notation_from_square(100), None);
+        assert_eq!(Chessboard::notation_from_square(999), None);
+    }
+
+    #[test]
+    fn test_round_trip_conversion() {
+        for square in 0..64 {
+            let notation = Chessboard::notation_from_square(square).unwrap();
+            let back_to_square = Chessboard::square_from_notation(&notation).unwrap();
+            assert_eq!(square, back_to_square);
+        }
     }
 }
