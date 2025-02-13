@@ -4,7 +4,7 @@ version = "0.4.0"
 edition = "2021"
 authors = ["Konnor Klercke <klercke@protonmail.com>"]
 description = "A chess game/engine"
-license = "GPL-3.0-only"
+license = "AGPL-3.0-only"
 repository = "https://gitlab.com/klercke/rschess"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
