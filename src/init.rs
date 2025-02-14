@@ -1,4 +1,4 @@
-use crate::board;
+use crate::{board, masks};
 
 use std::sync::OnceLock;
 use std::time::Instant;
@@ -14,7 +14,7 @@ pub fn precompute() {
         let _knight_move_table =
             board::KNIGHT_MOVE_TABLE.get_or_init(board::precompute_knight_moves);
         println!(
-            "Knight move table computer in {}.{:03}ms",
+            "Knight move table computed in {}.{:03}ms",
             knight_start.elapsed().as_millis(),
             knight_start.elapsed().as_micros() % 1000
         );
@@ -22,7 +22,7 @@ pub fn precompute() {
         let king_start = Instant::now();
         let _king_move_table = board::KING_MOVE_TABLE.get_or_init(board::precompute_king_moves);
         println!(
-            "King move table computer in {}.{:03}ms",
+            "King move table computed in {}.{:03}ms",
             king_start.elapsed().as_millis(),
             king_start.elapsed().as_micros() % 1000
         );
@@ -37,6 +37,15 @@ pub fn precompute() {
             "Pawn attack tables computed in {}.{:03}ms",
             pawn_start.elapsed().as_millis(),
             pawn_start.elapsed().as_micros() % 1000
+        );
+
+        let bishop_start = Instant::now();
+        let _bishop_start_table =
+            masks::BISHOP_BLOCKER_MASKS.get_or_init(masks::precompute_bishop_blocker_masks);
+        println!(
+            "Bishop move table computed in {}.{:03}ms",
+            bishop_start.elapsed().as_millis(),
+            bishop_start.elapsed().as_micros() % 1000
         );
 
         let total_time = total_start.elapsed();

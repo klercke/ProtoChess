@@ -1,5 +1,6 @@
 use protochess::board::{self, Bitboard, Chessboard};
 use protochess::init;
+use protochess::masks;
 
 use std::io::{self, Write};
 
@@ -17,6 +18,7 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     /// Convert to/from square ID and standard algebraic notation
+    #[clap(visible_alias = "c")]
     Convert { notation: String },
 
     /// Exit the program
@@ -60,6 +62,7 @@ enum LookupTablePiece {
     King,
     WhitePawn,
     BlackPawn,
+    Bishop,
 }
 
 /// Custom parser for LookupTablePiece
@@ -67,10 +70,11 @@ fn parse_lookup_table_piece(s: &str) -> Result<LookupTablePiece, String> {
     match s.to_uppercase().as_str() {
         "KNIGHT" | "N" => Ok(LookupTablePiece::Knight),
         "KING" | "K" => Ok(LookupTablePiece::King),
-        "WHITEPAWN" | "W" => Ok(LookupTablePiece::WhitePawn),
-        "BLACKPAWN" | "B" => Ok(LookupTablePiece::BlackPawn),
+        "BISHOP" | "B" => Ok(LookupTablePiece::Bishop),
+        "WHITEPAWN" | "WP" => Ok(LookupTablePiece::WhitePawn),
+        "BLACKPAWN" | "BP" => Ok(LookupTablePiece::BlackPawn),
         _ => Err(format!(
-            "Invalid piece: {}. Must be KNIGHT, KING, or PAWN (or N, K, or P).",
+            "Invalid piece: {}. Must be KNIGHT, KING, BISHOP, WHITEPAWN, or BLACKPAWN (or N, K, B, WP, or BP).",
             s
         )),
     }
@@ -146,6 +150,10 @@ fn handle_command(command: Commands) {
                     LookupTablePiece::King => board::KING_MOVE_TABLE
                         .get()
                         .expect("King table not initialized."),
+                    // TODO: This is not technically a move table. Fix that.
+                    LookupTablePiece::Bishop => masks::BISHOP_BLOCKER_MASKS
+                        .get()
+                        .expect("King table not initialized."),
                     LookupTablePiece::WhitePawn => board::WHITE_PAWN_ATTACK_TABLE
                         .get()
                         .expect("Pawn table not initialized."),
@@ -186,8 +194,10 @@ mod tests {
         );
         assert_eq!(parse_lookup_table_piece("K"), Ok(LookupTablePiece::King));
         assert_eq!(parse_lookup_table_piece("KING"), Ok(LookupTablePiece::King));
+        assert_eq!(parse_lookup_table_piece("B"), Ok(LookupTablePiece::Bishop));
+        assert_eq!(parse_lookup_table_piece("BISHOP"), Ok(LookupTablePiece::Bishop));
         assert_eq!(
-            parse_lookup_table_piece("B"),
+            parse_lookup_table_piece("BP"),
             Ok(LookupTablePiece::BlackPawn)
         );
         assert_eq!(
@@ -195,7 +205,7 @@ mod tests {
             Ok(LookupTablePiece::BlackPawn)
         );
         assert_eq!(
-            parse_lookup_table_piece("W"),
+            parse_lookup_table_piece("WP"),
             Ok(LookupTablePiece::WhitePawn)
         );
         assert_eq!(
@@ -203,7 +213,6 @@ mod tests {
             Ok(LookupTablePiece::WhitePawn)
         );
         assert!(parse_lookup_table_piece("QUEEN").is_err());
-        assert!(parse_lookup_table_piece("BISHOP").is_err());
         assert!(parse_lookup_table_piece("X").is_err());
         assert!(parse_lookup_table_piece("").is_err());
     }
