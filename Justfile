@@ -13,7 +13,7 @@ check:
   cago check
 
 test:
-  cargo test
+  cargo test --workspace --no-fail-fast
 
 build:
   cargo build --release
