@@ -195,7 +195,10 @@ mod tests {
         assert_eq!(parse_lookup_table_piece("K"), Ok(LookupTablePiece::King));
         assert_eq!(parse_lookup_table_piece("KING"), Ok(LookupTablePiece::King));
         assert_eq!(parse_lookup_table_piece("B"), Ok(LookupTablePiece::Bishop));
-        assert_eq!(parse_lookup_table_piece("BISHOP"), Ok(LookupTablePiece::Bishop));
+        assert_eq!(
+            parse_lookup_table_piece("BISHOP"),
+            Ok(LookupTablePiece::Bishop)
+        );
         assert_eq!(
             parse_lookup_table_piece("BP"),
             Ok(LookupTablePiece::BlackPawn)
