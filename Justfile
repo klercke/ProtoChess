@@ -15,6 +15,9 @@ check:
 test:
   cargo test --workspace --no-fail-fast
 
+pretty-test:
+  cargo pretty-test --workspace --no-fail-fast
+
 build:
   cargo build --release
 

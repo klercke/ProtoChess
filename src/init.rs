@@ -43,9 +43,18 @@ pub fn precompute() {
         let _bishop_start_table =
             masks::BISHOP_BLOCKER_MASKS.get_or_init(masks::precompute_bishop_blocker_masks);
         println!(
-            "Bishop move table computed in {}.{:03}ms",
+            "Bishop blocker table computed in {}.{:03}ms",
             bishop_start.elapsed().as_millis(),
             bishop_start.elapsed().as_micros() % 1000
+        );
+
+        let rook_start = Instant::now();
+        let _rook_start_table =
+            masks::ROOK_BLOCKER_MASKS.get_or_init(masks::precompute_rook_blocker_masks);
+        println!(
+            "Rook blocker table computed in {}.{:03}ms",
+            rook_start.elapsed().as_millis(),
+            rook_start.elapsed().as_micros() % 1000
         );
 
         let total_time = total_start.elapsed();

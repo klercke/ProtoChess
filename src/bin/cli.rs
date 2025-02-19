@@ -60,9 +60,10 @@ fn convert_command(input: &String) {
 enum LookupTablePiece {
     Knight,
     King,
+    Bishop,
+    Rook,
     WhitePawn,
     BlackPawn,
-    Bishop,
 }
 
 /// Custom parser for LookupTablePiece
@@ -71,10 +72,11 @@ fn parse_lookup_table_piece(s: &str) -> Result<LookupTablePiece, String> {
         "KNIGHT" | "N" => Ok(LookupTablePiece::Knight),
         "KING" | "K" => Ok(LookupTablePiece::King),
         "BISHOP" | "B" => Ok(LookupTablePiece::Bishop),
+        "ROOK" | "R" => Ok(LookupTablePiece::Rook),
         "WHITEPAWN" | "WP" => Ok(LookupTablePiece::WhitePawn),
         "BLACKPAWN" | "BP" => Ok(LookupTablePiece::BlackPawn),
         _ => Err(format!(
-            "Invalid piece: {}. Must be KNIGHT, KING, BISHOP, WHITEPAWN, or BLACKPAWN (or N, K, B, WP, or BP).",
+            "Invalid piece: {}. Must be KNIGHT, KING, BISHOP, ROOK, WHITEPAWN, or BLACKPAWN (or N, K, B, R, WP, or BP).",
             s
         )),
     }
@@ -153,13 +155,16 @@ fn handle_command(command: Commands) {
                     // TODO: This is not technically a move table. Fix that.
                     LookupTablePiece::Bishop => masks::BISHOP_BLOCKER_MASKS
                         .get()
-                        .expect("King table not initialized."),
+                        .expect("Bishop table not initialized."),
+                    LookupTablePiece::Rook => masks::ROOK_BLOCKER_MASKS
+                        .get()
+                        .expect("Rook table not initialized."),
                     LookupTablePiece::WhitePawn => board::WHITE_PAWN_ATTACK_TABLE
                         .get()
-                        .expect("Pawn table not initialized."),
+                        .expect("White pawn table not initialized."),
                     LookupTablePiece::BlackPawn => board::BLACK_PAWN_ATTACK_TABLE
                         .get()
-                        .expect("Pawn table not initialized."),
+                        .expect("Black pawn table not initialized."),
                 };
 
                 pretty_print_bitboard(move_table[square], Some(square));
