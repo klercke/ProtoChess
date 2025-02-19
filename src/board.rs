@@ -281,9 +281,9 @@ mod tests {
 
         // Knight on b1 (square 1)
         let b1_moves = move_table[1];
+        assert!(b1_moves & (1 << 11) != 0); // d2
         assert!(b1_moves & (1 << 16) != 0); // a3
         assert!(b1_moves & (1 << 18) != 0); // c3
-        assert!(b1_moves & (1 << 11) != 0); // d2
         assert_eq!(b1_moves.count_ones(), 3); // Three valid moves
 
         // Knight on d4 (square 27)
