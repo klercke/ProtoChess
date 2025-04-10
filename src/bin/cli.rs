@@ -1,7 +1,9 @@
 use protochess::board::{self, Bitboard, Chessboard};
+use protochess::game::Game;
+use protochess::init;
+use protochess::masks;
 
 use std::io::{self, Write};
-use std::time::Instant;
 
 use clap::{Parser, Subcommand};
 
@@ -17,6 +19,7 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     /// Convert to/from square ID and standard algebraic notation
+    #[clap(visible_alias = "c")]
     Convert { notation: String },
 
     /// Exit the program
@@ -33,6 +36,9 @@ enum Commands {
         /// The square to check
         square: usize,
     },
+
+    /// Import board state from a FEN string
+    Fen { fen_str: String },
 }
 
 /// Calls the relevant function to convert between square ID and algebraic notation
@@ -58,6 +64,8 @@ fn convert_command(input: &String) {
 enum LookupTablePiece {
     Knight,
     King,
+    Bishop,
+    Rook,
     WhitePawn,
     BlackPawn,
 }
@@ -67,10 +75,12 @@ fn parse_lookup_table_piece(s: &str) -> Result<LookupTablePiece, String> {
     match s.to_uppercase().as_str() {
         "KNIGHT" | "N" => Ok(LookupTablePiece::Knight),
         "KING" | "K" => Ok(LookupTablePiece::King),
-        "WHITEPAWN" | "W" => Ok(LookupTablePiece::WhitePawn),
-        "BLACKPAWN" | "B" => Ok(LookupTablePiece::BlackPawn),
+        "BISHOP" | "B" => Ok(LookupTablePiece::Bishop),
+        "ROOK" | "R" => Ok(LookupTablePiece::Rook),
+        "WHITEPAWN" | "WP" => Ok(LookupTablePiece::WhitePawn),
+        "BLACKPAWN" | "BP" => Ok(LookupTablePiece::BlackPawn),
         _ => Err(format!(
-            "Invalid piece: {}. Must be KNIGHT, KING, or PAWN (or N, K, or P).",
+            "Invalid piece: {}. Must be KNIGHT, KING, BISHOP, ROOK, WHITEPAWN, or BLACKPAWN (or N, K, B, R, WP, or BP).",
             s
         )),
     }
@@ -100,8 +110,8 @@ fn pretty_print_bitboard(bitboard: Bitboard, marker: Option<usize>) {
 /// Prompts the user to run commands interactively
 fn interactive_mode() {
     // Generate and print board
-    let board = Chessboard::new();
-    board.display();
+    let game = Game::new();
+    game.board.display();
 
     loop {
         // Get command from user
@@ -146,36 +156,35 @@ fn handle_command(command: Commands) {
                     LookupTablePiece::King => board::KING_MOVE_TABLE
                         .get()
                         .expect("King table not initialized."),
+                    // TODO: This is not technically a move table. Fix that.
+                    LookupTablePiece::Bishop => masks::BISHOP_BLOCKER_MASKS
+                        .get()
+                        .expect("Bishop table not initialized."),
+                    LookupTablePiece::Rook => masks::ROOK_BLOCKER_MASKS
+                        .get()
+                        .expect("Rook table not initialized."),
                     LookupTablePiece::WhitePawn => board::WHITE_PAWN_ATTACK_TABLE
                         .get()
-                        .expect("Pawn table not initialized."),
+                        .expect("White pawn table not initialized."),
                     LookupTablePiece::BlackPawn => board::BLACK_PAWN_ATTACK_TABLE
                         .get()
-                        .expect("Pawn table not initialized."),
+                        .expect("Black pawn table not initialized."),
                 };
 
                 pretty_print_bitboard(move_table[square], Some(square));
             }
         }
+        Commands::Fen { fen_str } => match Game::from_fen(&fen_str) {
+            Ok(game) => game.board.display(),
+            Err(e) => {
+                eprintln!("{}", e)
+            }
+        },
     }
 }
 
 pub fn main() {
-    // Precompute moves
-    println!("Precompuing move tables...");
-    let precompute_start_time = Instant::now();
-    let _knight_move_table = board::KNIGHT_MOVE_TABLE.get_or_init(board::precompute_knight_moves);
-    let _king_move_table = board::KING_MOVE_TABLE.get_or_init(board::precompute_king_moves);
-    let (black_pawn_table, white_pawn_table) = board::precompute_pawn_attacks();
-    let _black_pawn_attack_table = board::BLACK_PAWN_ATTACK_TABLE.get_or_init(|| black_pawn_table);
-    let _white_pawn_attack_table = board::WHITE_PAWN_ATTACK_TABLE.get_or_init(|| white_pawn_table);
-    let precompute_duration = precompute_start_time.elapsed();
-    println!(
-        "Finished precomputing move tables in {}.{:03}ms ({}ns)",
-        precompute_duration.as_millis(),
-        precompute_duration.as_micros() % 1000,
-        precompute_duration.as_nanos()
-    );
+    init::precompute();
 
     // Process command line args
     let cli = Cli::parse();
@@ -200,8 +209,13 @@ mod tests {
         );
         assert_eq!(parse_lookup_table_piece("K"), Ok(LookupTablePiece::King));
         assert_eq!(parse_lookup_table_piece("KING"), Ok(LookupTablePiece::King));
+        assert_eq!(parse_lookup_table_piece("B"), Ok(LookupTablePiece::Bishop));
         assert_eq!(
-            parse_lookup_table_piece("B"),
+            parse_lookup_table_piece("BISHOP"),
+            Ok(LookupTablePiece::Bishop)
+        );
+        assert_eq!(
+            parse_lookup_table_piece("BP"),
             Ok(LookupTablePiece::BlackPawn)
         );
         assert_eq!(
@@ -209,7 +223,7 @@ mod tests {
             Ok(LookupTablePiece::BlackPawn)
         );
         assert_eq!(
-            parse_lookup_table_piece("W"),
+            parse_lookup_table_piece("WP"),
             Ok(LookupTablePiece::WhitePawn)
         );
         assert_eq!(
@@ -217,7 +231,6 @@ mod tests {
             Ok(LookupTablePiece::WhitePawn)
         );
         assert!(parse_lookup_table_piece("QUEEN").is_err());
-        assert!(parse_lookup_table_piece("BISHOP").is_err());
         assert!(parse_lookup_table_piece("X").is_err());
         assert!(parse_lookup_table_piece("").is_err());
     }

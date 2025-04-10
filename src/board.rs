@@ -2,10 +2,17 @@ use crate::masks;
 
 use std::sync::OnceLock;
 
+/// Store move tables for knig
+pub static KNIGHT_MOVE_TABLE: OnceLock<[Bitboard; 64]> = OnceLock::new();
+pub static KING_MOVE_TABLE: OnceLock<[Bitboard; 64]> = OnceLock::new();
+pub static WHITE_PAWN_ATTACK_TABLE: OnceLock<[Bitboard; 64]> = OnceLock::new();
+pub static BLACK_PAWN_ATTACK_TABLE: OnceLock<[Bitboard; 64]> = OnceLock::new();
+
 /// Represents a chessboard as a u64
 pub type Bitboard = u64;
 
 /// Chessboard made of bitboards representing each piece
+#[derive(Debug)]
 pub struct Chessboard {
     pub white_pawns: Bitboard,
     pub white_rooks: Bitboard,
@@ -23,13 +30,32 @@ pub struct Chessboard {
 
 impl Default for Chessboard {
     fn default() -> Self {
-        Self::new()
+        Self::new_starting()
     }
 }
 
 impl Chessboard {
-    /// Creates a new chessboard with all pieces in their starting positions
-    pub fn new() -> Self {
+    /// Creates a new, blank Chessboard
+    pub fn new_empty() -> Self {
+        Self {
+            white_pawns: 0x0000_0000_0000_0000,
+            white_rooks: 0x0000_0000_0000_0000,
+            white_knights: 0x0000_0000_0000_0000,
+            white_bishops: 0x0000_0000_0000_0000,
+            white_queens: 0x0000_0000_0000_0000,
+            white_kings: 0x0000_0000_0000_0000,
+
+            black_pawns: 0x0000_0000_0000_0000,
+            black_rooks: 0x0000_0000_0000_0000,
+            black_knights: 0x0000_0000_0000_0000,
+            black_bishops: 0x0000_0000_0000_0000,
+            black_queens: 0x0000_0000_0000_0000,
+            black_kings: 0x0000_0000_0000_0000,
+        }
+    }
+
+    /// Creates a new Chessboard with all pieces in their starting positions
+    pub fn new_starting() -> Self {
         Self {
             white_pawns: 0x0000_0000_0000_FF00,   // ... 1111 1111 ...
             white_rooks: 0x0000_0000_0000_0081,   // ... 1000 0001
@@ -46,7 +72,6 @@ impl Chessboard {
             black_kings: 0x1000_0000_0000_0000, // 0001 0000 ...
         }
     }
-
     /// Checks if a given square is occupied
     pub fn is_square_occupied(&self, square: usize) -> bool {
         let mask = 1 << square;
@@ -124,7 +149,7 @@ impl Chessboard {
     fn piece_at(&self, square: usize) -> char {
         let mask = 1 << square;
         if self.white_pawns & mask != 0 {
-            'X'
+            'P'
         } else if self.white_rooks & mask != 0 {
             'R'
         } else if self.white_knights & mask != 0 {
@@ -136,7 +161,7 @@ impl Chessboard {
         } else if self.white_kings & mask != 0 {
             'K'
         } else if self.black_pawns & mask != 0 {
-            'x'
+            'p'
         } else if self.black_rooks & mask != 0 {
             'r'
         } else if self.black_knights & mask != 0 {
@@ -187,12 +212,6 @@ impl Chessboard {
         Some(format!("{}{}", file as char, rank as char))
     }
 }
-
-/// Store move tables for knights, kings, and pawn attacks
-pub static KNIGHT_MOVE_TABLE: OnceLock<[Bitboard; 64]> = OnceLock::new();
-pub static KING_MOVE_TABLE: OnceLock<[Bitboard; 64]> = OnceLock::new();
-pub static WHITE_PAWN_ATTACK_TABLE: OnceLock<[Bitboard; 64]> = OnceLock::new();
-pub static BLACK_PAWN_ATTACK_TABLE: OnceLock<[Bitboard; 64]> = OnceLock::new();
 
 /// Precompute move tables for knights
 pub fn precompute_knight_moves() -> [Bitboard; 64] {
@@ -281,9 +300,9 @@ mod tests {
 
         // Knight on b1 (square 1)
         let b1_moves = move_table[1];
+        assert!(b1_moves & (1 << 11) != 0); // d2
         assert!(b1_moves & (1 << 16) != 0); // a3
         assert!(b1_moves & (1 << 18) != 0); // c3
-        assert!(b1_moves & (1 << 11) != 0); // d2
         assert_eq!(b1_moves.count_ones(), 3); // Three valid moves
 
         // Knight on d4 (square 27)
@@ -369,7 +388,7 @@ mod tests {
 
     #[test]
     fn test_move_piece() {
-        let mut board = Chessboard::new();
+        let mut board = Chessboard::new_starting();
         assert!(board.is_square_occupied(1)); // Knight on b1
         assert!(!board.is_square_occupied(18)); // No piece on c3
 
@@ -380,7 +399,7 @@ mod tests {
 
     #[test]
     fn test_white_pieces_bitboard() {
-        let board = Chessboard::new();
+        let board = Chessboard::new_starting();
         let white_pieces = board.white_pieces();
 
         assert!(white_pieces & board.white_pawns != 0);
@@ -394,7 +413,7 @@ mod tests {
 
     #[test]
     fn test_black_pieces_bitboard() {
-        let board = Chessboard::new();
+        let board = Chessboard::new_starting();
         let black_pieces = board.black_pieces();
 
         assert!(black_pieces & board.black_pawns != 0);
@@ -408,7 +427,7 @@ mod tests {
 
     #[test]
     fn test_occupied_bitboard() {
-        let board = Chessboard::new();
+        let board = Chessboard::new_starting();
         let occupied = board.occupied();
 
         assert_eq!(occupied.count_ones(), 32); // 32 pieces total
