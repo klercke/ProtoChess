@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.5.0] - 2025-04-10
+
+### 🚀 Features
+
+- *(assets)* Add project logo
+- *(game)* Fen input
+
+### ⚙️ Miscellaneous Tasks
+
+- Add AGPL v3.0 license
+
 ## [0.4.0] - 2025-02-11
 
 ### 🚀 Features
