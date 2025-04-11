@@ -40,6 +40,20 @@ enum Commands {
 
     /// Import board state from a FEN string
     Fen { fen_str: String },
+
+    /// Prints the game state
+    #[clap(visible_aliases = ["show", "p", "s"])]
+    Print,
+
+    /// Moves a piece from `from` to `to`
+    #[clap(visible_aliases = ["m", "mv"])]
+    Move {
+        /// The square the piece currently resides on
+        from: String,
+
+        /// The target square for the piece to move to
+        to: String,
+    },
 }
 
 /// Calls the relevant function to convert between square ID and algebraic notation
@@ -110,8 +124,8 @@ fn pretty_print_bitboard(bitboard: Bitboard, marker: Option<usize>) {
 
 /// Prompts the user to run commands interactively
 fn interactive_mode() {
-    let game = Game::new();
-    game.board.display();
+    let mut game = Game::new();
+    game.board().display();
 
     loop {
         print!("PC> ");
@@ -135,7 +149,7 @@ fn interactive_mode() {
         match Cli::try_parse_from(std::iter::once("").chain(args.iter().map(String::as_str))) {
             Ok(cli) => {
                 if let Some(command) = cli.command {
-                    handle_command(command);
+                    handle_command(command, &mut game);
                 }
             }
             Err(e) => println!("{}", e),
@@ -144,15 +158,17 @@ fn interactive_mode() {
 }
 
 /// Processes commands and arguments
-fn handle_command(command: Commands) {
+fn handle_command(command: Commands, game: &mut Game) {
     match command {
         Commands::Convert { notation } => {
             convert_command(&notation);
         }
+
         Commands::Exit => {
             println!("Bye!");
             std::process::exit(0);
         }
+
         Commands::GetValidMoves { square_alg, piece } => {
             let square_id = Chessboard::square_from_notation(&square_alg).unwrap();
             let move_table = match piece {
@@ -179,12 +195,29 @@ fn handle_command(command: Commands) {
 
             pretty_print_bitboard(move_table[square_id], Some(square_id));
         }
+
         Commands::Fen { fen_str } => match Game::from_fen(&fen_str) {
-            Ok(game) => game.board.display(),
+            Ok(new_game) => *game = new_game,
             Err(e) => {
-                eprintln!("{}", e)
+                eprintln!("{}", e);
             }
         },
+
+        Commands::Print => {
+            game.board().display();
+        }
+
+        Commands::Move { from, to } => {
+            let from_id = Chessboard::square_from_notation(&from).unwrap();
+            let to_id = Chessboard::square_from_notation(&to).unwrap();
+
+            match game.make_move(from_id, to_id) {
+                Ok(_) => game.board().display(),
+                Err(e) => {
+                    eprintln!("Invalid move: {:?}", e);
+                }
+            }
+        }
     }
 }
 
@@ -194,7 +227,8 @@ pub fn main() {
     // Process command line args
     let cli = Cli::parse();
     if let Some(command) = cli.command {
-        handle_command(command);
+        let mut game = Game::new();
+        handle_command(command, &mut game);
     } else {
         // Go into interactive mode if no command is supplied
         interactive_mode();
