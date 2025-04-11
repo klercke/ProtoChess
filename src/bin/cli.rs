@@ -87,13 +87,13 @@ enum LookupTablePiece {
 
 /// Custom parser for LookupTablePiece
 fn parse_lookup_table_piece(s: &str) -> Result<LookupTablePiece, String> {
-    match s.to_uppercase().as_str() {
-        "KNIGHT" | "N" => Ok(LookupTablePiece::Knight),
-        "KING" | "K" => Ok(LookupTablePiece::King),
-        "BISHOP" | "B" => Ok(LookupTablePiece::Bishop),
-        "ROOK" | "R" => Ok(LookupTablePiece::Rook),
-        "WHITEPAWN" | "WP" => Ok(LookupTablePiece::WhitePawn),
-        "BLACKPAWN" | "BP" => Ok(LookupTablePiece::BlackPawn),
+    match s {
+        "N" | "n" => Ok(LookupTablePiece::Knight),
+        "K" | "k" => Ok(LookupTablePiece::King),
+        "B" | "b" => Ok(LookupTablePiece::Bishop),
+        "R" | "r" => Ok(LookupTablePiece::Rook),
+        "P" => Ok(LookupTablePiece::WhitePawn),
+        "p" => Ok(LookupTablePiece::BlackPawn),
         _ => Err(format!(
             "Invalid piece: {}. Must be KNIGHT, KING, BISHOP, ROOK, WHITEPAWN, or BLACKPAWN (or N, K, B, R, WP, or BP).",
             s
@@ -242,34 +242,19 @@ mod tests {
     #[test]
     fn test_lookup_table_piece_parsing() {
         assert_eq!(parse_lookup_table_piece("N"), Ok(LookupTablePiece::Knight));
-        assert_eq!(
-            parse_lookup_table_piece("KNIGHT"),
-            Ok(LookupTablePiece::Knight)
-        );
+        assert_eq!(parse_lookup_table_piece("n"), Ok(LookupTablePiece::Knight));
         assert_eq!(parse_lookup_table_piece("K"), Ok(LookupTablePiece::King));
-        assert_eq!(parse_lookup_table_piece("KING"), Ok(LookupTablePiece::King));
+        assert_eq!(parse_lookup_table_piece("k"), Ok(LookupTablePiece::King));
         assert_eq!(parse_lookup_table_piece("B"), Ok(LookupTablePiece::Bishop));
+        assert_eq!(parse_lookup_table_piece("b"), Ok(LookupTablePiece::Bishop));
         assert_eq!(
-            parse_lookup_table_piece("BISHOP"),
-            Ok(LookupTablePiece::Bishop)
-        );
-        assert_eq!(
-            parse_lookup_table_piece("BP"),
+            parse_lookup_table_piece("p"),
             Ok(LookupTablePiece::BlackPawn)
         );
         assert_eq!(
-            parse_lookup_table_piece("BLACKPAWN"),
-            Ok(LookupTablePiece::BlackPawn)
-        );
-        assert_eq!(
-            parse_lookup_table_piece("WP"),
+            parse_lookup_table_piece("P"),
             Ok(LookupTablePiece::WhitePawn)
         );
-        assert_eq!(
-            parse_lookup_table_piece("WHITEPAWN"),
-            Ok(LookupTablePiece::WhitePawn)
-        );
-        assert!(parse_lookup_table_piece("QUEEN").is_err());
         assert!(parse_lookup_table_piece("X").is_err());
         assert!(parse_lookup_table_piece("").is_err());
     }
