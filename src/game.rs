@@ -11,11 +11,57 @@ bitflags::bitflags! {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum GameError {
+    /// Tried to move from an empty square
+    NoPieceAtSource,
+
+    /// Tried to move opponent's piece
+    NotYourTurn,
+
+    /// Destination square is occupied by your own piece
+    FriendlyFire,
+
+    /// Move is not valid for that piece
+    InvalidMoveForPiece,
+
+    /// Move would leave or put king in check
+    KingInCheck,
+
+    /// Tried to castle illegally
+    IllegalCastle,
+
+    /// Tried to capture en passant when it's not available
+    InvalidEnPassant,
+
+    /// Tried to promote without a pawn or with invalid target
+    BadPromotion,
+
+    /// Fallback error with human-readable explanation
+    InvalidMove { reason: String },
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MoveResult {
+    pub capture: bool,
+    pub check: bool,
+    pub checkmate: bool,
+    pub stalemate: bool,
+    pub promotion: Option<char>, // like 'Q', 'N', etc.
+    pub castle: Option<CastleSide>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CastleSide {
+    Kingside,
+    Queenside,
+}
+
 /// Represents a chess game
 #[derive(Debug)]
 pub struct Game {
     /// The `Chessboard` used by this game
-    pub board: Chessboard,
+    board: Chessboard,
     /// Whether or not it's White's turn (if false, it is Black's turn)
     pub white_to_move: bool,
     /// A `Flags` representing whether or not each castling move is still valid
@@ -193,6 +239,29 @@ impl Game {
             halfmove_clock,
             fullmove_number,
         })
+    }
+
+    pub fn board(&self) -> &Chessboard {
+        &self.board
+    }
+
+    pub fn make_move(&mut self, from: usize, to: usize) -> Result<MoveResult, GameError> {
+        // TODO: Validate move
+
+        self.board.move_piece(from, to);
+
+        // Return move result
+        let result = MoveResult {
+            //TODO: Actually populate these
+            capture: false,
+            check: false,
+            checkmate: false,
+            stalemate: false,
+            promotion: None, // Some('Q') or None
+            castle: None,    // Some(CastleSide::Kingside) or None
+        };
+
+        Ok(result)
     }
 }
 
