@@ -6,6 +6,7 @@ use protochess::masks;
 use std::io::{self, Write};
 
 use clap::{Parser, Subcommand};
+use shellish_parse::parse;
 
 /// Define command-line args
 #[derive(Parser)]
@@ -34,7 +35,7 @@ enum Commands {
         piece: LookupTablePiece,
 
         /// The square to check
-        square: usize,
+        square_alg: String,
     },
 
     /// Import board state from a FEN string
@@ -109,20 +110,28 @@ fn pretty_print_bitboard(bitboard: Bitboard, marker: Option<usize>) {
 
 /// Prompts the user to run commands interactively
 fn interactive_mode() {
-    // Generate and print board
     let game = Game::new();
     game.board.display();
 
     loop {
-        // Get command from user
         print!("PC> ");
         io::stdout().flush().unwrap();
-        let mut input = String::new();
-        io::stdin().read_line(&mut input).unwrap();
-        let input = input.trim().to_string();
 
-        // Process command
-        let args: Vec<String> = input.split_whitespace().map(String::from).collect();
+        let mut input = String::new();
+        if io::stdin().read_line(&mut input).is_err() {
+            eprintln!("failed to read input");
+            continue;
+        }
+
+        let input = input.trim();
+        let args = match parse(input, false) {
+            Ok(parsed) => parsed,
+            Err(e) => {
+                eprintln!("parse error: {}", e);
+                continue;
+            }
+        };
+
         match Cli::try_parse_from(std::iter::once("").chain(args.iter().map(String::as_str))) {
             Ok(cli) => {
                 if let Some(command) = cli.command {
@@ -144,35 +153,31 @@ fn handle_command(command: Commands) {
             println!("Bye!");
             std::process::exit(0);
         }
-        // TODO: Let this take standard notation as well (ex. a6)
-        Commands::GetValidMoves { square, piece } => {
-            if square > 63 {
-                println!("Invalid square: {}", square)
-            } else {
-                let move_table = match piece {
-                    LookupTablePiece::Knight => board::KNIGHT_MOVE_TABLE
-                        .get()
-                        .expect("Knight table not initialized."),
-                    LookupTablePiece::King => board::KING_MOVE_TABLE
-                        .get()
-                        .expect("King table not initialized."),
-                    // TODO: This is not technically a move table. Fix that.
-                    LookupTablePiece::Bishop => masks::BISHOP_BLOCKER_MASKS
-                        .get()
-                        .expect("Bishop table not initialized."),
-                    LookupTablePiece::Rook => masks::ROOK_BLOCKER_MASKS
-                        .get()
-                        .expect("Rook table not initialized."),
-                    LookupTablePiece::WhitePawn => board::WHITE_PAWN_ATTACK_TABLE
-                        .get()
-                        .expect("White pawn table not initialized."),
-                    LookupTablePiece::BlackPawn => board::BLACK_PAWN_ATTACK_TABLE
-                        .get()
-                        .expect("Black pawn table not initialized."),
-                };
+        Commands::GetValidMoves { square_alg, piece } => {
+            let square_id = Chessboard::square_from_notation(&square_alg).unwrap();
+            let move_table = match piece {
+                LookupTablePiece::Knight => board::KNIGHT_MOVE_TABLE
+                    .get()
+                    .expect("Knight table not initialized."),
+                LookupTablePiece::King => board::KING_MOVE_TABLE
+                    .get()
+                    .expect("King table not initialized."),
+                // TODO: This is not technically a move table. Fix that.
+                LookupTablePiece::Bishop => masks::BISHOP_BLOCKER_MASKS
+                    .get()
+                    .expect("Bishop table not initialized."),
+                LookupTablePiece::Rook => masks::ROOK_BLOCKER_MASKS
+                    .get()
+                    .expect("Rook table not initialized."),
+                LookupTablePiece::WhitePawn => board::WHITE_PAWN_ATTACK_TABLE
+                    .get()
+                    .expect("White pawn table not initialized."),
+                LookupTablePiece::BlackPawn => board::BLACK_PAWN_ATTACK_TABLE
+                    .get()
+                    .expect("Black pawn table not initialized."),
+            };
 
-                pretty_print_bitboard(move_table[square], Some(square));
-            }
+            pretty_print_bitboard(move_table[square_id], Some(square_id));
         }
         Commands::Fen { fen_str } => match Game::from_fen(&fen_str) {
             Ok(game) => game.board.display(),

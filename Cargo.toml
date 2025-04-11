@@ -12,3 +12,4 @@ repository = "https://gitlab.com/klercke/rschess"
 [dependencies]
 bitflags = "2.9.0"
 clap = { version = "4.5.27", features = ["color", "derive"] }
+shellish_parse = "2.2.0"
