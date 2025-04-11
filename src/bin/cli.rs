@@ -1,4 +1,5 @@
 use protochess::board::{self, Bitboard, Chessboard};
+use protochess::game::Game;
 use protochess::init;
 use protochess::masks;
 
@@ -35,6 +36,9 @@ enum Commands {
         /// The square to check
         square: usize,
     },
+
+    /// Import board state from a FEN string
+    Fen { fen_str: String },
 }
 
 /// Calls the relevant function to convert between square ID and algebraic notation
@@ -106,8 +110,8 @@ fn pretty_print_bitboard(bitboard: Bitboard, marker: Option<usize>) {
 /// Prompts the user to run commands interactively
 fn interactive_mode() {
     // Generate and print board
-    let board = Chessboard::new();
-    board.display();
+    let game = Game::new();
+    game.board.display();
 
     loop {
         // Get command from user
@@ -170,6 +174,12 @@ fn handle_command(command: Commands) {
                 pretty_print_bitboard(move_table[square], Some(square));
             }
         }
+        Commands::Fen { fen_str } => match Game::from_fen(&fen_str) {
+            Ok(game) => game.board.display(),
+            Err(e) => {
+                eprintln!("{}", e)
+            }
+        },
     }
 }
 
