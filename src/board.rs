@@ -143,6 +143,7 @@ impl Chessboard {
             println!(); // Each rank on a new line
         }
         println!("  a b c d e f g h "); // File labels
+        println!();
     }
 
     /// Return a character representation of the piece at a given square

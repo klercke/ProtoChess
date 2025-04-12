@@ -197,7 +197,10 @@ fn handle_command(command: Commands, game: &mut Game) {
         }
 
         Commands::Fen { fen_str } => match Game::from_fen(&fen_str) {
-            Ok(new_game) => *game = new_game,
+            Ok(new_game) => {
+                *game = new_game;
+                game.board().display();
+            }
             Err(e) => {
                 eprintln!("{}", e);
             }
