@@ -18,19 +18,14 @@ coverage:
     - if: '$CI_COMMIT_BRANCH == "main"'
   script:
     - cargo install cargo-tarpaulin
-    - cargo tarpaulin --out Xml
-    - curl https://keybase.io/codecovsecurity/pgp_keys.asc | gpg --import 
-    - curl -Os https://cli.codecov.io/latest/linux/codecov
-    - curl -Os https://cli.codecov.io/latest/linux/codecov.SHA256SUM
-    - curl -Os https://cli.codecov.io/latest/linux/codecov.SHA256SUM.sig
-    - gpg --verify codecov.SHA256SUM.sig codecov.SHA256SUM
-    - shasum -a 256 -c codecov.SHA256SUM
-    - chmod +x codecov
-    - ./codecov --verbose upload-process --disable-search --token $CODECOV_TOKEN --file cobertura.xml
+    - cargo tarpaulin --out Xml --out Html
+    - mkdir -p public
+    - cp -r tarpaulin-report.html public/coverage.html
   coverage: '/^\d+.\d+% coverage/'
   artifacts:
     paths:
       - cobertura.xml
+      - tarpaulin-report.html
     reports:
       coverage_report:
         coverage_format: cobertura
