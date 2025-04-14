@@ -26,6 +26,7 @@ coverage:
     paths:
       - cobertura.xml
       - tarpaulin-report.html
+      - target/doc/coverage.html
     reports:
       coverage_report:
         coverage_format: cobertura
