@@ -17,10 +17,11 @@ coverage:
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
   script:
-    - cargo install cargo-tarpaulin
+    - curl -L https://github.com/xd009642/tarpaulin/releases/latest/download/cargo-tarpaulin-x86_64-unknown-linux-gnu.tar.gz | tar xz
+    - mv cargo-tarpaulin ~/.cargo/bin/
     - cargo tarpaulin --out Xml --out Html
     - mkdir -p public
-    - cp -r tarpaulin-report.html public/coverage.html
+    - cp tarpaulin-report.html target/doc/coverage.html
   coverage: '/^\d+.\d+% coverage/'
   artifacts:
     paths:
