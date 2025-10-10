@@ -1,4 +1,5 @@
 use crate::masks;
+use crate::pieces::PieceType;
 
 use std::sync::OnceLock;
 
@@ -149,33 +150,29 @@ impl Chessboard {
     /// Return a character representation of the piece at a given square
     fn piece_at(&self, square: usize) -> char {
         let mask = 1 << square;
-        if self.white_pawns & mask != 0 {
-            'P'
-        } else if self.white_rooks & mask != 0 {
-            'R'
-        } else if self.white_knights & mask != 0 {
-            'N'
-        } else if self.white_bishops & mask != 0 {
-            'B'
-        } else if self.white_queens & mask != 0 {
-            'Q'
-        } else if self.white_kings & mask != 0 {
-            'K'
-        } else if self.black_pawns & mask != 0 {
-            'p'
-        } else if self.black_rooks & mask != 0 {
-            'r'
-        } else if self.black_knights & mask != 0 {
-            'n'
-        } else if self.black_bishops & mask != 0 {
-            'b'
-        } else if self.black_queens & mask != 0 {
-            'q'
-        } else if self.black_kings & mask != 0 {
-            'k'
-        } else {
-            '.'
+
+        let pieces = [
+            (self.white_pawns, PieceType::WhitePawn),
+            (self.white_knights, PieceType::WhiteKnight),
+            (self.white_bishops, PieceType::WhiteBishop),
+            (self.white_rooks, PieceType::WhiteRook),
+            (self.white_queens, PieceType::WhiteQueen),
+            (self.white_kings, PieceType::WhiteKing),
+            (self.black_pawns, PieceType::BlackPawn),
+            (self.black_knights, PieceType::BlackKnight),
+            (self.black_bishops, PieceType::BlackBishop),
+            (self.black_rooks, PieceType::BlackRook),
+            (self.black_queens, PieceType::BlackQueen),
+            (self.black_kings, PieceType::BlackKing),
+        ];
+
+        for (bitboard, piece_type) in pieces {
+            if bitboard & mask != 0 {
+                return piece_type.symbol();
+            }
         }
+
+        '.'
     }
 
     /// Converts standard notation (e4) to square number (28)

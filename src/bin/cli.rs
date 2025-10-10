@@ -27,10 +27,11 @@ enum Commands {
     #[clap(visible_aliases = ["quit", "q"])]
     Exit,
 
-    /// For a given square ID, get all valid moves for a knight on that square
+    /// Gets all valid moves for a piece on `square`. If `piece` is provided, simulates that
+    /// `piece` being on `square`
     #[clap(visible_alias = "gvm")]
     GetValidMoves {
-        /// The chess piece type (KNIGHT, KING, OR PAWN (or N, K, or P))
+        /// The chess piece type
         #[clap(value_parser = parse_lookup_table_piece)]
         piece: LookupTablePiece,
 
