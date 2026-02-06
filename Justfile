@@ -27,3 +27,8 @@ run:
 cli:
   cargo run --bin cli --release
 
+update-nix:
+  nix run github:cargo2nix/cargo2nix
+
+update-rust:
+  nix flake update rust-overlay
