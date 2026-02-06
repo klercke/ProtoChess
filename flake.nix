@@ -21,20 +21,25 @@
         # Create nixpkgs containing rustBuilder from cargo2nix overlay
         pkgs = import nixpkgs {
           inherit system;
-          overlays = [ cargo2nix.overlays.default ];
+          overlays = [
+            cargo2nix.overlays.default
+            rust-overlay.overlays.default
+          ];
+
         };
+        
+        rustVersion = "1.93.0";
 
         # Create workspace and dependencies package set
         rustPkgs = pkgs.rustBuilder.makePackageSet {
-          rustVersion = "1.93.0";
+          inherit rustVersion;
           packageFun = import ./Cargo.nix;
         };
 
         # Create workspace/dev shell
         workspaceShell = (rustPkgs.workspaceShell {
           packages = with pkgs; [
-            rustc
-            cargo
+            rust-bin.stable.${rustVersion}.default
             rust-analyzer
             clippy
             git-cliff
