@@ -10,21 +10,22 @@
   in {
       # Dev shell
       devShells.${system}.default = pkgs.mkShell {
-          nativeBuildInputs = [
-            pkgs.rustc
-            pkgs.cargo
-            pkgs.rust-analyzer
-          ];
+        nativeBuildInputs = with pkgs; [
+          rustc
+          cargo
+          rust-analyzer
+          clippy
+        ];
 
-          # Make Rust SRC avialable for rust-analyzer
-          RUST_SRC_PATH = "${pkgs.rustPlatform.rustLibSrc}";
-        };
+        # Make Rust SRC avialable for rust-analyzer
+        RUST_SRC_PATH = "${pkgs.rustPlatform.rustLibSrc}";
+      };
 
       # Package build
-      packages.default = pkgs.rustPlatform.buildRustPackage {
-          src = ./.;
-
-          cargoLock.lockFile = ./Cargo.lock;
-        };
-    };
+      packages.${system}.default = pkgs.rustPlatform.buildRustPackage {
+        pname = "ProtoChess";
+        src = pkgs.lib.cleanSource ./.;
+        cargoLock.lockFile = ./Cargo.lock;
+      };
+  };
 }
