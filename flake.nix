@@ -37,6 +37,7 @@
             cargo
             rust-analyzer
             clippy
+            git-cliff
           ];
           RUST_SRC_PATH = "${pkgs.rustPlatform.rustLibSrc}";
         });
