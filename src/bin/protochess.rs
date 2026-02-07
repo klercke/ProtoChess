@@ -1,7 +1,7 @@
-use protochess::board::{self, Bitboard, Chessboard};
-use protochess::game::Game;
-use protochess::init;
-use protochess::masks;
+use protochess::engine::board::{self, Bitboard, Chessboard};
+use protochess::engine::game::Game;
+use protochess::engine::init;
+use protochess::engine::masks;
 
 use std::io::{self, Write};
 

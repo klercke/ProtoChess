@@ -1,4 +1,4 @@
-use crate::{board, masks};
+use crate::engine::{board, masks};
 
 use std::sync::OnceLock;
 use std::time::Instant;

@@ -1,4 +1,4 @@
-use crate::board::Chessboard;
+use crate::engine::board::Chessboard;
 
 bitflags::bitflags! {
     /// Stores whether or not each castling option is valid

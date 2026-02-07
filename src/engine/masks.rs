@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use crate::board::Bitboard;
+use crate::engine::board::Bitboard;
 
 use std::sync::OnceLock;
 
